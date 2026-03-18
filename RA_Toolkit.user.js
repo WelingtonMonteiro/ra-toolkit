@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.7.1
+// @version      2.8.0
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,14 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.7.1";
+  var CURRENT_VERSION = "2.8.0";
 
   var CHANGELOG = [
+    { version: "2.8.0", changes: [
+      "1-year Activity Timeline — GitHub-style contribution heatmap (52 weeks × 7 days) replacing the 30-day grid",
+      "Streak Tracker now uses 365-day data for more accurate streak and active-day counts",
+      "Yearly data fetched via quarterly API chunks (API_GetAchievementsEarnedBetween) to bypass 500-record limit"
+    ]},
     { version: "2.7.1", changes: [
       "Missing consoles — added ROM search support for Amstrad CPC, Apple II, Uzebox, and WASM-4"
     ]},
@@ -2981,11 +2986,33 @@
           text-align: right;
           min-width: 40px;
         }
-        /* Activity Timeline (GitHub contributions style) */
-        .enhanced-timeline-grid {
+        /* Activity Timeline (GitHub contributions style - yearly heatmap) */
+        .enhanced-timeline-wrapper {
+          overflow-x: auto;
+          padding-bottom: 4px;
+        }
+        .enhanced-timeline-table {
           display: grid;
-          grid-template-columns: repeat(31, 1fr);
+          grid-template-columns: 28px repeat(53, 1fr);
+          grid-template-rows: auto repeat(7, 1fr);
           gap: 2px;
+          min-width: 580px;
+        }
+        .enhanced-timeline-month-label {
+          font-size: 0.55rem;
+          color: #737373;
+          text-align: center;
+          line-height: 1;
+          padding-bottom: 1px;
+        }
+        .enhanced-timeline-day-label {
+          font-size: 0.55rem;
+          color: #737373;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          padding-right: 4px;
+          line-height: 1;
         }
         .enhanced-timeline-cell {
           aspect-ratio: 1;
@@ -2998,10 +3025,11 @@
         .enhanced-timeline-cell.level-2 { background: rgba(59,130,246,0.5); }
         .enhanced-timeline-cell.level-3 { background: rgba(59,130,246,0.75); }
         .enhanced-timeline-cell.level-4 { background: #3b82f6; }
-        .enhanced-timeline-labels {
+        .enhanced-timeline-footer {
           display: flex;
           justify-content: space-between;
-          margin-top: 4px;
+          align-items: center;
+          margin-top: 6px;
           font-size: 0.6rem;
           color: #525252;
         }
@@ -3009,10 +3037,8 @@
           display: flex;
           align-items: center;
           gap: 3px;
-          margin-top: 6px;
           font-size: 0.6rem;
           color: #525252;
-          justify-content: flex-end;
         }
         .enhanced-timeline-legend-cell {
           width: 10px;
@@ -3166,7 +3192,7 @@
     var timelineSection = document.createElement('div');
     timelineSection.className = 'enhanced-dashboard-section';
     timelineSection.innerHTML =
-      '<div class="enhanced-dashboard-section-title">📅 Activity (Last 30 Days)</div>'
+      '<div class="enhanced-dashboard-section-title">📅 Activity (Last 365 Days)</div>'
       + '<div class="enhanced-timeline-content">'
         + '<div class="enhanced-dashboard-skeleton" style="height:32px;"></div>'
       + '</div>';
@@ -3322,7 +3348,7 @@
           + '<div class="enhanced-streak-big">' + streak + '</div>'
           + '<div>'
             + '<div class="enhanced-streak-info">' + (streak === 1 ? 'day streak' : 'days streak') + (streak > 0 ? ' 🔥' : '') + '</div>'
-            + '<div class="enhanced-streak-detail">Best: ' + bestStreak + ' days · ' + activeDays + ' active days · ' + totalAch + ' achievements (30d)</div>'
+            + '<div class="enhanced-streak-detail">Best: ' + bestStreak + ' days · ' + activeDays + ' active days · ' + totalAch + ' achievements (365d)</div>'
           + '</div>'
         + '</div>';
     }
@@ -3395,24 +3421,36 @@
         dayMap[day] = (dayMap[day] || 0) + 1;
       });
 
-      // Build 30-day grid (today → 29 days ago)
+      // Build 365-day calendar: weeks (columns) × days-of-week (rows)
       var today = new Date();
       today.setHours(0, 0, 0, 0);
-      var cells = [];
+      var todayDow = today.getDay(); // 0=Sun...6=Sat
+
+      // Start from the Sunday of the week 52 weeks ago
+      var startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - 364 - todayDow);
+
+      // Build matrix: 7 rows (Sun=0 to Sat=6) × up to 53 columns
+      var totalDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
+      var numWeeks = Math.ceil(totalDays / 7);
+      var cells = []; // [{date, count, day, week, dow}]
       var maxCount = 0;
-      for (var i = 29; i >= 0; i--) {
-        var d = new Date(today);
-        d.setDate(d.getDate() - i);
-        var dStr = d.toISOString().substring(0, 10);
-        var count = dayMap[dStr] || 0;
-        if (count > maxCount) maxCount = count;
-        cells.push({ date: dStr, count: count, day: d });
+
+      for (var w = 0; w < numWeeks; w++) {
+        for (var dow = 0; dow < 7; dow++) {
+          var d = new Date(startDate);
+          d.setDate(d.getDate() + w * 7 + dow);
+          if (d > today) continue;
+          var dStr = d.toISOString().substring(0, 10);
+          var count = dayMap[dStr] || 0;
+          if (count > maxCount) maxCount = count;
+          cells.push({ date: dStr, count: count, day: d, week: w, dow: dow });
+        }
       }
 
-      // Determine level thresholds
       function getLevel(count) {
         if (count === 0) return 0;
-        if (maxCount <= 4) return count; // 1-4 direct mapping
+        if (maxCount <= 4) return count;
         var pct = count / maxCount;
         if (pct <= 0.25) return 1;
         if (pct <= 0.5) return 2;
@@ -3420,39 +3458,84 @@
         return 4;
       }
 
-      var totalAch = achievements.length;
-      var gridHtml = '<div class="enhanced-timeline-grid">';
-      cells.forEach(function (c) {
-        var level = getLevel(c.count);
-        var dayNum = c.day.getDate();
-        var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        var label = monthNames[c.day.getMonth()] + ' ' + dayNum + ': ' + c.count + ' achievement' + (c.count !== 1 ? 's' : '');
-        gridHtml += '<div class="enhanced-timeline-cell level-' + level + '" title="' + escapeHtml(label) + '"></div>';
-      });
-      gridHtml += '</div>';
-
-      // Date labels
-      var firstDate = cells[0].day;
-      var lastDate = cells[cells.length - 1].day;
       var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      var labelsHtml = '<div class="enhanced-timeline-labels">'
-        + '<span>' + monthNames[firstDate.getMonth()] + ' ' + firstDate.getDate() + '</span>'
-        + '<span>' + totalAch + ' achievements</span>'
-        + '<span>' + monthNames[lastDate.getMonth()] + ' ' + lastDate.getDate() + '</span>'
-        + '</div>';
+      var dayLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-      // Legend
-      var legendHtml = '<div class="enhanced-timeline-legend">'
-        + '<span>Less</span>'
-        + '<div class="enhanced-timeline-legend-cell level-0" style="background:rgba(255,255,255,0.04);"></div>'
-        + '<div class="enhanced-timeline-legend-cell level-1" style="background:rgba(59,130,246,0.25);"></div>'
-        + '<div class="enhanced-timeline-legend-cell level-2" style="background:rgba(59,130,246,0.5);"></div>'
-        + '<div class="enhanced-timeline-legend-cell level-3" style="background:rgba(59,130,246,0.75);"></div>'
-        + '<div class="enhanced-timeline-legend-cell level-4" style="background:#3b82f6;"></div>'
-        + '<span>More</span>'
-        + '</div>';
+      // Determine month label positions (column index where each month starts)
+      var monthCols = {};
+      cells.forEach(function (c) {
+        if (c.dow === 0) { // first day of each week-column
+          var m = c.day.getMonth();
+          var key = c.day.getFullYear() + '-' + m;
+          if (!(key in monthCols)) {
+            monthCols[key] = { week: c.week, month: m };
+          }
+        }
+      });
 
-      content.innerHTML = gridHtml + labelsHtml + legendHtml;
+      // Build HTML grid: row 0 = month labels, rows 1-7 = days
+      var html = '<div class="enhanced-timeline-wrapper">';
+      html += '<div class="enhanced-timeline-table" style="grid-template-columns:28px repeat(' + numWeeks + ',1fr);grid-template-rows:auto repeat(7,1fr);">';
+
+      // Month label row — first cell is empty (day-label column)
+      html += '<div></div>';
+      var monthLabelsArr = [];
+      for (var wi = 0; wi < numWeeks; wi++) {
+        monthLabelsArr.push('');
+      }
+      Object.keys(monthCols).forEach(function (key) {
+        var info = monthCols[key];
+        monthLabelsArr[info.week] = monthNames[info.month];
+      });
+      for (var wi = 0; wi < numWeeks; wi++) {
+        html += '<div class="enhanced-timeline-month-label">' + monthLabelsArr[wi] + '</div>';
+      }
+
+      // Day rows (0=Sun through 6=Sat)
+      // Build lookup: cellMap[week][dow]
+      var cellMap = {};
+      cells.forEach(function (c) {
+        if (!cellMap[c.week]) cellMap[c.week] = {};
+        cellMap[c.week][c.dow] = c;
+      });
+
+      for (var dow = 0; dow < 7; dow++) {
+        // Day label on the left — only show Mon (1), Wed (3), Fri (5) to reduce clutter
+        if (dow === 1 || dow === 3 || dow === 5) {
+          html += '<div class="enhanced-timeline-day-label">' + dayLabels[dow] + '</div>';
+        } else {
+          html += '<div class="enhanced-timeline-day-label"></div>';
+        }
+        for (var wi = 0; wi < numWeeks; wi++) {
+          var cell = cellMap[wi] && cellMap[wi][dow];
+          if (cell) {
+            var level = getLevel(cell.count);
+            var label = monthNames[cell.day.getMonth()] + ' ' + cell.day.getDate() + ': ' + cell.count + ' achievement' + (cell.count !== 1 ? 's' : '');
+            html += '<div class="enhanced-timeline-cell level-' + level + '" title="' + escapeHtml(label) + '"></div>';
+          } else {
+            html += '<div></div>';
+          }
+        }
+      }
+
+      html += '</div></div>';
+
+      // Footer: total achievements + legend
+      var totalAch = achievements.length;
+      var activeDays = Object.keys(dayMap).length;
+      html += '<div class="enhanced-timeline-footer">';
+      html += '<span>' + totalAch + ' achievements in ' + activeDays + ' days</span>';
+      html += '<div class="enhanced-timeline-legend">';
+      html += '<span>Less</span>';
+      html += '<div class="enhanced-timeline-legend-cell level-0" style="background:rgba(255,255,255,0.04);"></div>';
+      html += '<div class="enhanced-timeline-legend-cell level-1" style="background:rgba(59,130,246,0.25);"></div>';
+      html += '<div class="enhanced-timeline-legend-cell level-2" style="background:rgba(59,130,246,0.5);"></div>';
+      html += '<div class="enhanced-timeline-legend-cell level-3" style="background:rgba(59,130,246,0.75);"></div>';
+      html += '<div class="enhanced-timeline-legend-cell level-4" style="background:#3b82f6;"></div>';
+      html += '<span>More</span>';
+      html += '</div></div>';
+
+      content.innerHTML = html;
     }
 
     // --- Fetch dashboard data ---
@@ -3570,15 +3653,53 @@
         + '&y=' + encodeURIComponent(apiKey)
         + '&m=43200'; // 30 days in minutes
 
-      // Fetch summary + recent games + recent achievements in parallel
-      Promise.all([
+      // Build quarterly URLs for 1-year timeline (4 chunks of ~91 days)
+      var now = Math.floor(Date.now() / 1000);
+      var oneYearAgo = now - 365 * 24 * 60 * 60;
+      var quarterSec = Math.ceil((now - oneYearAgo) / 4);
+      var yearlyChunkUrls = [];
+      for (var q = 0; q < 4; q++) {
+        var f = oneYearAgo + q * quarterSec;
+        var t = (q < 3) ? (oneYearAgo + (q + 1) * quarterSec) : now;
+        yearlyChunkUrls.push(
+          'https://retroachievements.org/API/API_GetAchievementsEarnedBetween.php'
+          + '?u=' + encodeURIComponent(targetUser)
+          + '&y=' + encodeURIComponent(apiKey)
+          + '&f=' + f + '&t=' + t
+        );
+      }
+
+      // Fetch summary + recent games + recent achievements (30d) + yearly chunks in parallel
+      var corePromises = [
         gmFetch(summaryUrl, 15000).then(function (r) { return JSON.parse(r.responseText); }).catch(function () { return null; }),
         gmFetch(recentAllUrl, 15000).then(function (r) { return JSON.parse(r.responseText); }).catch(function () { return null; }),
         gmFetch(recentAchUrl, 15000).then(function (r) { return JSON.parse(r.responseText); }).catch(function () { return null; })
-      ]).then(function (results) {
+      ];
+      var yearlyPromises = yearlyChunkUrls.map(function (url) {
+        return gmFetch(url, 20000).then(function (r) { return JSON.parse(r.responseText); }).catch(function () { return []; });
+      });
+
+      Promise.all(corePromises.concat(yearlyPromises)).then(function (results) {
         var summary = results[0];
         var recentGames = results[1];
-        var recentAchievements = results[2];
+        var recentAchievements = results[2]; // 30-day data for rarest
+
+        // Merge 4 quarterly chunks into yearlyAchievements
+        var yearlyAchievements = [];
+        for (var q = 0; q < 4; q++) {
+          var chunk = results[3 + q];
+          if (Array.isArray(chunk)) {
+            yearlyAchievements = yearlyAchievements.concat(chunk);
+          }
+        }
+        // Deduplicate by AchievementID + Date (in case of overlapping boundaries)
+        var seen = {};
+        yearlyAchievements = yearlyAchievements.filter(function (a) {
+          var key = a.AchievementID + '|' + a.Date + '|' + a.HardcoreMode;
+          if (seen[key]) return false;
+          seen[key] = true;
+          return true;
+        });
 
         // --- Stats Cards ---
         var points = 0;
@@ -3621,15 +3742,15 @@
         }
         renderAlmostThere(almostGames);
 
-        // --- Streak Tracker ---
-        if (recentAchievements && Array.isArray(recentAchievements)) {
-          renderStreakTracker(recentAchievements);
+        // --- Streak Tracker (uses yearly data for better accuracy) ---
+        if (yearlyAchievements && yearlyAchievements.length > 0) {
+          renderStreakTracker(yearlyAchievements);
         } else {
           streakSection.querySelector('.enhanced-streak-content').innerHTML =
             '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load streak data.</div>';
         }
 
-        // --- Rarest Achievements ---
+        // --- Rarest Achievements (30-day data) ---
         if (recentAchievements && Array.isArray(recentAchievements)) {
           renderRarestAchievements(recentAchievements);
         } else {
@@ -3637,9 +3758,9 @@
             '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load rarity data.</div>';
         }
 
-        // --- Activity Timeline ---
-        if (recentAchievements && Array.isArray(recentAchievements)) {
-          renderActivityTimeline(recentAchievements);
+        // --- Activity Timeline (yearly data) ---
+        if (yearlyAchievements && yearlyAchievements.length > 0) {
+          renderActivityTimeline(yearlyAchievements);
         } else {
           timelineSection.querySelector('.enhanced-timeline-content').innerHTML =
             '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load activity data.</div>';

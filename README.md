@@ -14,7 +14,7 @@
   <a href="https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js">
     <img src="https://img.shields.io/badge/Install-Tampermonkey-green?logo=tampermonkey" alt="Install">
   </a>
-  <img src="https://img.shields.io/badge/version-2.7.1-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.8.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
 </p>
 
@@ -92,9 +92,9 @@ Injected on user profile pages (`/user/{username}`) with 6 modules:
 | **Stats Cards** | Games Played, Mastered, Mastery Rate, Points & Rank |
 | **Almost There** | Top 5 games closest to 100% (≥50% progress) |
 | **Console Breakdown** | Top 10 consoles with horizontal bars and icons |
-| **Streak Tracker** | Current streak, best streak, active days (30d) |
+| **Streak Tracker** | Current streak, best streak, active days (365d) |
 | **Rarest Achievements** | Top 5 by TrueRatio with badge and multiplier |
-| **Activity Timeline** | 30-day contribution grid (GitHub-style) |
+| **Activity Timeline** | 365-day contribution heatmap (GitHub-style, 52 weeks × 7 days) |
 
 ### 📄 Profile Pagination
 - Paginated "Last Games Played" with numbered buttons
@@ -116,6 +116,11 @@ Injected on user profile pages (`/user/{username}`) with 6 modules:
 - **Light mode support** — auto-detects `data-scheme` (dark/light/black/system) and adapts colors
 - **Mobile layout support** — sidebar injections work on viewports <1024px
 - **Guide link detection** — shows 📖 RA Achievement Guide button when a guide exists for the game
+
+### 🆕 v2.8.0
+- **1-year Activity Timeline** — GitHub-style contribution heatmap (52 weeks × 7 days) with month labels and day-of-week indicators
+- **Streak Tracker upgraded** — now uses 365-day data for accurate streak and active-day counts
+- **Quarterly API fetching** — uses `API_GetAchievementsEarnedBetween` in 4 chunks to bypass the 500-record limit
 
 ### 🆕 v2.7.0
 - **Achievement rarity indicator** — color-coded badges on each achievement by unlock %:
@@ -141,7 +146,7 @@ Click the **⚙️ RA Toolkit** button (bottom-right corner) to open the setting
 ## 🛠️ Tech Stack
 
 - **Tampermonkey** userscript (vanilla JS, no frameworks)
-- **RA Web API** (`API_GetUserSummary`, `API_GetUserRecentlyPlayedGames`, `API_GetUserRecentAchievements`, `API_GetGameInfoAndUserProgress`, `API_GetGameHashes`)
+- **RA Web API** (`API_GetUserSummary`, `API_GetUserRecentlyPlayedGames`, `API_GetUserRecentAchievements`, `API_GetAchievementsEarnedBetween`, `API_GetGameInfoAndUserProgress`, `API_GetGameHashes`)
 - **MyMemory API** for translations
 - **DOM scraping** for console breakdown (Progression Status section)
 - **GM_xmlhttpRequest** for cross-origin requests
