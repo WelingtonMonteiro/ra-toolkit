@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.6.0
+// @version      2.6.1
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,12 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.6.0";
+  var CURRENT_VERSION = "2.6.1";
 
   var CHANGELOG = [
+    { version: "2.6.1", changes: [
+      "Save button in settings panel — 'Atualizar' button to confirm and reload"
+    ]},
     { version: "2.6.0", changes: [
       "ROM search cache (24h TTL) — no more re-searching the same game",
       "Changelog popup — shows what's new after updates",
@@ -218,7 +221,6 @@
       "Mobile layout support — sidebar injections work on mobile (<1024px)",
       "Guide link detection — shows RA Guide link on game pages when available"
     ]},
-    { version: "2.5.1", changes: ["Updated author name"] },
     { version: "2.5.0", changes: [
       "Player Insights Dashboard (6 modules)",
       "RomsFun ROM source",
@@ -920,7 +922,8 @@
           + langSelectorHtml
           + apiKeyHtml
           + accentColorHtml
-          + '</div>';
+          + '</div>'
+          + '<div class="flex w-full justify-end" style="margin-top:1rem;"><button id="enhanced-settings-save" class="btn-base btn-base--default btn-base--size-default" type="button">Atualizar</button></div>';
 
         // Insert after the second card in settings
         const cards = flexContainer.children;
@@ -975,6 +978,21 @@
             GM_setValue("accentColor", defaultColor);
             if (accentInput) accentInput.value = defaultColor;
             accentInput.dispatchEvent(new Event("input"));
+          });
+        }
+
+        // Bind save/update button
+        var saveBtn = document.getElementById("enhanced-settings-save");
+        if (saveBtn) {
+          saveBtn.addEventListener("click", function () {
+            // All settings are already saved on change, just reload to apply
+            var originalText = saveBtn.textContent;
+            saveBtn.textContent = "✓ Salvo!";
+            saveBtn.style.opacity = "0.7";
+            saveBtn.disabled = true;
+            setTimeout(function () {
+              location.reload();
+            }, 600);
           });
         }
       }
