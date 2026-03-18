@@ -14,7 +14,7 @@
   <a href="https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js">
     <img src="https://img.shields.io/badge/Install-Tampermonkey-green?logo=tampermonkey" alt="Install">
   </a>
-  <img src="https://img.shields.io/badge/version-2.5.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.6.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
 </p>
 
@@ -109,6 +109,14 @@ Injected on user profile pages (`/user/{username}`) with 6 modules:
 - Glass-effect settings panel with styled toggles
 - Structured logging (debug/info/warn/error)
 
+### 🆕 v2.6.0
+- **ROM search cache** — results cached for 24h (`GM_setValue` + TTL), no re-searching the same game
+- **Changelog popup** — shows what's new after each update
+- **Custom accent color** — color picker in settings to customize toggles, buttons, and UI highlights
+- **Light mode support** — auto-detects `data-scheme` (dark/light/black/system) and adapts colors
+- **Mobile layout support** — sidebar injections work on viewports <1024px
+- **Guide link detection** — shows 📖 RA Achievement Guide button when a guide exists for the game
+
 ---
 
 ## ⚙️ Configuration
@@ -118,6 +126,7 @@ Click the **⚙️ RA Toolkit** button (bottom-right corner) to open the setting
 - ROM search sources (Archive.org, Myrient, Emuparadise, RomsFun)
 - Hash verification (RA Trophy badges)
 - Translation language
+- Custom accent color (color picker + reset)
 - Debug logging
 
 ---
@@ -136,26 +145,24 @@ Click the **⚙️ RA Toolkit** button (bottom-right corner) to open the setting
 ## 📋 Roadmap
 
 ### High Priority
-- [ ] Cache search results (`GM_setValue` with TTL)
-- [ ] Light mode support (detect `data-scheme`)
-- [ ] Mobile layout support (`GameShowMobileRoot`)
+- [x] ~~Cache search results (`GM_setValue` with TTL)~~ ✅ v2.6.0
+- [x] ~~Light mode support (detect `data-scheme`)~~ ✅ v2.6.0
+- [x] ~~Mobile layout support (`GameShowMobileRoot`)~~ ✅ v2.6.0
 
 ### Medium Priority
 - [ ] "Translate All" bulk button
 - [ ] Achievement filter (Unlocked / Locked / All)
-- [ ] Quick progress bar in sidebar
-- [ ] Guide links detection (RA Guides)
-- [ ] Friend comparison (`API_GetUserGameProgress`)
+- [x] ~~Guide links detection (RA Guides)~~ ✅ v2.6.0
 - [ ] Missing consoles (Amstrad CPC, Apple II, Uzebox, WASM4)
 
 ### Low Priority
 - [ ] Export/Import settings (JSON)
 - [ ] Keyboard shortcuts (`T` translate, `D` downloads)
-- [ ] Custom accent color theme
+- [x] ~~Custom accent color theme~~ ✅ v2.6.0
 - [ ] Achievement rarity indicator (color by unlock %)
 - [ ] Collapse/expand sidebar sections
 - [ ] Config sync across devices (GitHub Gist)
-- [ ] Changelog popup after update
+- [x] ~~Changelog popup after update~~ ✅ v2.6.0
 - [ ] Automated tests for utility functions
 
 ---

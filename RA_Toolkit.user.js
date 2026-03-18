@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.5.1
+// @version      2.6.0
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -172,6 +172,122 @@
   }
 
   // =========================================
+  //     ROM Search Cache (GM_setValue + TTL)
+  // =========================================
+  var ROM_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+  function getRomCacheKey(gameTitle, consoleName) {
+    return 'romCache_' + consoleName + '_' + gameTitle.toLowerCase().replace(/[^a-z0-9]/g, '_');
+  }
+
+  function getCachedRomResults(gameTitle, consoleName) {
+    var key = getRomCacheKey(gameTitle, consoleName);
+    return Promise.resolve(GM_getValue(key, null)).then(function (cached) {
+      if (!cached) return null;
+      if (Date.now() - cached.ts > ROM_CACHE_TTL) {
+        GM_deleteValue(key);
+        return null;
+      }
+      log.info("[Cache] Hit for " + gameTitle + " (" + cached.results.length + " results, age " + Math.round((Date.now() - cached.ts) / 60000) + "m)");
+      return cached;
+    });
+  }
+
+  function setCachedRomResults(gameTitle, consoleName, results, resultsDlcs, collectionName, collectionUrl) {
+    var key = getRomCacheKey(gameTitle, consoleName);
+    GM_setValue(key, {
+      ts: Date.now(),
+      results: results,
+      resultsDlcs: resultsDlcs,
+      collection: { name: collectionName, url: collectionUrl }
+    });
+    log.info("[Cache] Stored " + results.length + " results for " + gameTitle);
+  }
+
+  // =========================================
+  //   Changelog Popup (after version update)
+  // =========================================
+  var CURRENT_VERSION = "2.6.0";
+
+  var CHANGELOG = [
+    { version: "2.6.0", changes: [
+      "ROM search cache (24h TTL) — no more re-searching the same game",
+      "Changelog popup — shows what's new after updates",
+      "Custom accent color — choose your highlight color in settings",
+      "Light mode support — adapts to the RA site theme (dark/light/black)",
+      "Mobile layout support — sidebar injections work on mobile (<1024px)",
+      "Guide link detection — shows RA Guide link on game pages when available"
+    ]},
+    { version: "2.5.1", changes: ["Updated author name"] },
+    { version: "2.5.0", changes: [
+      "Player Insights Dashboard (6 modules)",
+      "RomsFun ROM source",
+      "RA Trophy badge for hash-verified ROMs",
+      "Pagination skeleton loaders",
+      "Previous/Next pagination buttons",
+      "MyMemory API rate limiter"
+    ]}
+  ];
+
+  function showChangelogPopup() {
+    return Promise.resolve(GM_getValue("lastSeenVersion", "0.0.0")).then(function (lastSeen) {
+      if (lastSeen === CURRENT_VERSION) return;
+      GM_setValue("lastSeenVersion", CURRENT_VERSION);
+
+      // Collect changes since last seen version
+      var newChanges = [];
+      for (var i = 0; i < CHANGELOG.length; i++) {
+        if (CHANGELOG[i].version === lastSeen) break;
+        newChanges.push(CHANGELOG[i]);
+      }
+      if (newChanges.length === 0) return;
+
+      var changesHtml = newChanges.map(function (entry) {
+        var items = entry.changes.map(function (c) { return '<li style="margin:2px 0;">' + escapeHtml(c) + '</li>'; }).join('');
+        return '<div style="margin-bottom:10px;"><strong style="color:var(--ra-accent,#3b82f6);">v' + escapeHtml(entry.version) + '</strong><ul style="margin:4px 0 0 16px;padding:0;list-style:disc;">' + items + '</ul></div>';
+      }).join('');
+
+      var overlay = document.createElement('div');
+      overlay.id = 'enhanced-changelog-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);';
+      overlay.innerHTML =
+        '<div style="background:var(--box-bg-color,#232323);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:24px;max-width:480px;width:90%;max-height:80vh;overflow-y:auto;color:var(--text-color,#c8c8c8);font-size:0.9rem;box-shadow:0 8px 32px rgba(0,0,0,0.5);">'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'
+        + '<h3 style="margin:0;font-size:1.2rem;color:var(--heading-color,#d2d2d2);">🎮 RA Toolkit Updated!</h3>'
+        + '<button id="enhanced-changelog-close" style="background:none;border:none;color:var(--text-color,#c8c8c8);font-size:1.4rem;cursor:pointer;padding:0 4px;line-height:1;">&times;</button>'
+        + '</div>'
+        + '<div style="line-height:1.5;">' + changesHtml + '</div>'
+        + '<div style="text-align:center;margin-top:16px;">'
+        + '<button id="enhanced-changelog-ok" style="padding:8px 24px;border-radius:8px;border:none;background:var(--ra-accent,#3b82f6);color:#fff;font-size:0.9rem;cursor:pointer;font-weight:600;">Got it!</button>'
+        + '</div>'
+        + '</div>';
+
+      document.body.appendChild(overlay);
+
+      function closePopup() { overlay.remove(); }
+      document.getElementById('enhanced-changelog-close').addEventListener('click', closePopup);
+      document.getElementById('enhanced-changelog-ok').addEventListener('click', closePopup);
+      overlay.addEventListener('click', function (e) { if (e.target === overlay) closePopup(); });
+    });
+  }
+
+  // =========================================
+  //    Theme Detection (light/dark/black)
+  // =========================================
+  function getScheme() {
+    var html = document.documentElement;
+    var scheme = html.getAttribute('data-scheme') || '';
+    if (scheme === 'system') {
+      return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
+    return scheme || 'dark';
+  }
+
+  function isLightMode() {
+    return getScheme() === 'light';
+  }
+
+  // =========================================
   //       Wait for React to Render
   // =========================================
   function waitForElement(selector, timeout = 10000) {
@@ -215,7 +331,8 @@
   function cleanup() {
     const ids = ["enhanced-settings", "enhanced-romsdl", "enhanced-speedruncom",
                  "enhanced-custom-bg-style", "enhanced-glass-style", "enhanced-dl-style",
-                 "enhanced-translate-style", "enhanced-pagination", "enhanced-pagination-style"];
+                 "enhanced-translate-style", "enhanced-pagination", "enhanced-pagination-style",
+                 "enhanced-guide-link", "enhanced-changelog-overlay"];
     ids.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.remove();
@@ -245,9 +362,42 @@
   var enableRomsFun = await GM_getValue("enableRomsFun", true);
   var enableDebugLog = await GM_getValue("enableDebugLog", false);
   var translateLang = await GM_getValue("translateLang", "pt-BR");
+  var accentColor = await GM_getValue("accentColor", "#3b82f6");
 
   // Apply log level from config
   currentLogLevel = enableDebugLog ? LOG_LEVELS.debug : LOG_LEVELS.info;
+
+  // Inject accent color CSS variable
+  var accentStyle = document.getElementById('enhanced-accent-style');
+  if (!accentStyle) {
+    accentStyle = document.createElement('style');
+    accentStyle.id = 'enhanced-accent-style';
+    document.head.appendChild(accentStyle);
+  }
+  accentStyle.textContent = ':root { --ra-accent: ' + accentColor + '; }'
+    + ' .enhanced-switch[data-state="checked"] { background-color: ' + accentColor + ' !important; }'
+    + ' .enhanced-translate-btn.translated { color: ' + accentColor + '; border-color: ' + accentColor + '40; }'
+    + ' #enhanced-changelog-ok { background: ' + accentColor + ' !important; }';
+
+  // Inject light mode adaptive CSS
+  var lightStyle = document.getElementById('enhanced-light-style');
+  if (!lightStyle) {
+    lightStyle = document.createElement('style');
+    lightStyle.id = 'enhanced-light-style';
+    document.head.appendChild(lightStyle);
+  }
+  lightStyle.textContent = isLightMode() ? `
+    .enhanced-translate-btn { color: #525252; border-color: rgba(0,0,0,0.15); }
+    .enhanced-translate-btn:hover { background: rgba(0,0,0,0.06); color: #1a1a1a; border-color: rgba(0,0,0,0.25); }
+    #enhanced-romsdl a { color: #2563eb !important; }
+    #enhanced-romsdl a:hover { color: #1d4ed8 !important; }
+    .enhanced-rom-noresults { background: rgba(0,0,0,0.03) !important; border-color: rgba(0,0,0,0.1) !important; }
+    .enhanced-rom-noresults p { color: #525252 !important; }
+    .enhanced-rom-noresults strong { color: #1a1a1a !important; }
+  ` : '';
+
+  // Show changelog popup on first run after update
+  showChangelogPopup();
 
   // =========================================
   //          Console Mappings
@@ -752,6 +902,15 @@
           + 'style="width:200px;padding:4px 8px;border-radius:6px;border:1px solid #525252;background:#262626;color:#e5e5e5;font-size:0.875rem;" />'
           + '</div>';
 
+        // Accent color picker
+        var accentColorHtml = '<div class="flex w-full items-center justify-between gap-3" style="min-height:2.5rem;margin-top:0.5rem;padding-top:0.75rem;border-top:1px solid rgba(255,255,255,0.1);">'
+          + '<label for="enhanced-accent-color" class="text-menu-link" style="flex:1;">Accent color <span style="font-size:0.8em;color:#b9b9b9;">(custom highlight color for toggles, buttons, and UI elements)</span></label>'
+          + '<div style="display:flex;align-items:center;gap:8px;">'
+          + '<input id="enhanced-accent-color" type="color" value="' + escapeHtml(accentColor) + '" style="width:40px;height:32px;border:1px solid #525252;border-radius:6px;background:#262626;cursor:pointer;padding:2px;" />'
+          + '<button id="enhanced-accent-reset" style="padding:4px 10px;border-radius:6px;border:1px solid #525252;background:#262626;color:#a3a3a3;font-size:0.8rem;cursor:pointer;" title="Reset to default blue">Reset</button>'
+          + '</div>'
+          + '</div>';
+
         const enhancedDiv = document.createElement("div");
         enhancedDiv.id = "enhanced-settings";
         enhancedDiv.className = "rounded-lg border border-embed-highlight bg-embed p-6 text-card-foreground shadow-sm w-full";
@@ -760,6 +919,7 @@
           + rowsHtml
           + langSelectorHtml
           + apiKeyHtml
+          + accentColorHtml
           + '</div>';
 
         // Insert after the second card in settings
@@ -788,6 +948,33 @@
         if (apiKeyInput) {
           apiKeyInput.addEventListener("change", function () {
             GM_setValue("raApiKey", this.value);
+          });
+        }
+
+        // Bind accent color picker
+        var accentInput = document.getElementById("enhanced-accent-color");
+        if (accentInput) {
+          accentInput.addEventListener("input", function () {
+            GM_setValue("accentColor", this.value);
+            var s = document.getElementById('enhanced-accent-style');
+            if (s) {
+              s.textContent = ':root { --ra-accent: ' + this.value + '; }'
+                + ' .enhanced-switch[data-state="checked"] { background-color: ' + this.value + ' !important; }'
+                + ' .enhanced-translate-btn.translated { color: ' + this.value + '; border-color: ' + this.value + '40; }';
+            }
+            // Update all visible checked switches immediately
+            document.querySelectorAll('.enhanced-switch[data-state="checked"]').forEach(function (sw) {
+              sw.style.backgroundColor = accentInput.value;
+            });
+          });
+        }
+        var accentReset = document.getElementById("enhanced-accent-reset");
+        if (accentReset) {
+          accentReset.addEventListener("click", function () {
+            var defaultColor = "#3b82f6";
+            GM_setValue("accentColor", defaultColor);
+            if (accentInput) accentInput.value = defaultColor;
+            accentInput.dispatchEvent(new Event("input"));
           });
         }
       }
@@ -928,8 +1115,14 @@
     // =========================================
     //        Prepare Sidebar Injection
     // =========================================
+    // Desktop: aside with data-testid="sidebar"
+    // Mobile (<1024px): sidebar is rendered below main content in block layout
+    var isMobile = window.innerWidth < 1024;
     const sidebar = document.querySelector('aside [data-testid="sidebar"]') ||
                     document.querySelector("aside");
+
+    // On mobile, also try to find the article content area for injection
+    const mobileContainer = isMobile ? (document.querySelector('main.with-sidebar > article') || document.querySelector('main > article')) : null;
 
     // Create ROMs and Speedrun containers in the sidebar
     const divRoms = document.createElement("div");
@@ -940,16 +1133,27 @@
     divSpeedruncom.id = "enhanced-speedruncom";
     divSpeedruncom.style.margin = "1em 0em";
 
-    if (sidebar) {
+    var injectionTarget = sidebar;
+    if (isMobile && !sidebar && mobileContainer) {
+      // On mobile without visible sidebar, inject at the end of article
+      injectionTarget = mobileContainer;
+      log.info("[Mobile] Injecting into article container");
+    }
+
+    if (injectionTarget) {
       // Insert at the top of the sidebar, after boxart
-      const boxart = sidebar.querySelector("div.overflow-hidden.text-center") ||
-                     sidebar.firstElementChild;
+      const boxart = injectionTarget.querySelector("div.overflow-hidden.text-center") ||
+                     (sidebar ? sidebar.firstElementChild : null);
       if (boxart && boxart.nextSibling) {
         boxart.after(divSpeedruncom);
         boxart.after(divRoms);
-      } else {
+      } else if (sidebar) {
         sidebar.prepend(divSpeedruncom);
         sidebar.prepend(divRoms);
+      } else {
+        // Mobile fallback: append at the end
+        injectionTarget.appendChild(divRoms);
+        injectionTarget.appendChild(divSpeedruncom);
       }
     }
 
@@ -975,6 +1179,54 @@
     }
 
     if (enableGameplayVideo || enableSpeedrun) getSpeedruns(gameTitle);
+
+    // =========================================
+    //        Guide Link Detection
+    // =========================================
+    (function injectGuideLink() {
+      // Try Inertia props first, then DOM scraping
+      var guideUrl = null;
+      if (props && props.backingGame && props.backingGame.guideUrl) {
+        guideUrl = props.backingGame.guideUrl;
+      } else if (props && props.game && props.game.guideUrl) {
+        guideUrl = props.game.guideUrl;
+      }
+      // Fallback: check if there's already a guide link in the DOM
+      if (!guideUrl) {
+        var existingGuide = document.querySelector('a[href*="github.com/RetroAchievements/guides"]');
+        if (existingGuide) guideUrl = existingGuide.href;
+      }
+      if (!guideUrl) {
+        log.debug("[Guide] No guide URL found for this game");
+        return;
+      }
+      // Don't inject if there's already a visible guide button
+      if (document.getElementById('enhanced-guide-link')) return;
+
+      log.info("[Guide] Found guide: " + guideUrl);
+
+      var guideDiv = document.createElement("div");
+      guideDiv.id = "enhanced-guide-link";
+      guideDiv.style.cssText = "margin:0.75em 0;";
+      guideDiv.innerHTML =
+        '<a href="' + escapeHtml(guideUrl) + '" target="_blank" rel="noopener" '
+        + 'style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;'
+        + 'background:rgba(59,130,246,0.08);border:1px solid var(--ra-accent,#3b82f6);'
+        + 'color:var(--ra-accent,#3b82f6);text-decoration:none;font-weight:600;font-size:0.9em;transition:all 0.2s;"'
+        + ' onmouseover="this.style.background=\'rgba(59,130,246,0.15)\'"'
+        + ' onmouseout="this.style.background=\'rgba(59,130,246,0.08)\'">'
+        + '<span style="font-size:1.2em;">📖</span>'
+        + '<span>RA Achievement Guide</span>'
+        + '<span style="margin-left:auto;font-size:0.85em;opacity:0.7;">↗</span>'
+        + '</a>';
+
+      // Insert before ROM section in sidebar
+      if (divRoms && divRoms.parentNode) {
+        divRoms.parentNode.insertBefore(guideDiv, divRoms);
+      } else if (injectionTarget) {
+        injectionTarget.appendChild(guideDiv);
+      }
+    })();
 
     // =========================================
     //     Achievement Translation Feature
@@ -1260,8 +1512,29 @@
       }
 
       if ((isAvailable && tag === "") || (consoleName === RAConsole.ARCADE && tag !== "")) {
-        // Show loading spinner
-        showLoading(divRoms, "Searching ROMs...");
+        // Check cache first
+        getCachedRomResults(gameTitle, consoleName).then(function (cached) {
+          if (cached) {
+            // Use cached results
+            results = cached.results;
+            resultsDlcs = cached.resultsDlcs || [];
+            collection = cached.collection || collection;
+            log.info("[Cache] Using cached ROM results (" + results.length + " ROMs)");
+            // Still need hashes for badges
+            return fetchGameHashes(gameId).then(function (hashes) {
+              knownHashes = hashes;
+            }).catch(function () { knownHashes = []; }).then(function () {
+              if (results.length > 0) {
+                createDownloads();
+              } else {
+                createNoRomsNotification();
+              }
+              if (resultsDlcs.length > 0) createDlcs();
+            });
+          }
+
+          // No cache — run search chain
+          showLoading(divRoms, "Searching ROMs...");
         log.info("Starting ROM search for: " + gameTitle + " [" + consoleName + "]");
         var promise;
 
@@ -1336,6 +1609,8 @@
         Promise.race([searchChain, timeoutPromise])
         .then(() => {
           hideLoading();
+          // Cache results for next time
+          setCachedRomResults(gameTitle, consoleName, results, resultsDlcs, collection.name, collection.url);
           if (results.length > 0) {
             log.info("Found " + results.length + " ROM(s)");
             createDownloads();
@@ -1349,11 +1624,13 @@
           hideLoading();
           log.warn("ROM search failed: " + err.message);
           if (results.length > 0) {
+            setCachedRomResults(gameTitle, consoleName, results, resultsDlcs, collection.name, collection.url);
             createDownloads();
           } else {
             createNoRomsNotification();
           }
         });
+        }); // end getCachedRomResults.then
       } else {
         log.debug("Searching roms for this system not supported: " + consoleName);
       }
