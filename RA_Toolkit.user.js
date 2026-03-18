@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.5.0
+// @version      2.5.1
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
-// @author       Miagui / Updated by Copilot
+// @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
 // @license      MIT
 // @icon         https://retroachievements.org/assets/images/ra-logo.webp
