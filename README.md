@@ -22,12 +22,50 @@
 
 ## 📥 Installation
 
-1. Install [Tampermonkey](https://www.tampermonkey.net/) in your browser
-2. **[Click here to install RA Toolkit](https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js)**
-3. Tampermonkey will ask to confirm — click **Install**
-4. Visit [retroachievements.org](https://retroachievements.org) and enjoy!
+### Step 1 — Install Tampermonkey
 
-> The script auto-updates via Tampermonkey when a new version is pushed to this repository.
+Tampermonkey is a browser extension that lets you run userscripts on any website.
+
+| Browser | Link |
+|---------|------|
+| Chrome | [Chrome Web Store](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) |
+| Firefox | [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/tampermonkey/) |
+| Edge | [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd) |
+| Safari | [Mac App Store](https://apps.apple.com/app/tampermonkey/id1482490089) |
+| Opera | [Opera Add-ons](https://addons.opera.com/extensions/details/tampermonkey-beta/) |
+
+1. Click the link for your browser above
+2. Click **Add to browser** / **Install**
+3. Confirm the installation when prompted
+4. You should see the Tampermonkey icon (🔲) in your browser toolbar
+
+### Step 2 — Install RA Toolkit
+
+**Option A — One click (recommended):**
+
+👉 **[Click here to install RA Toolkit](https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js)**
+
+Tampermonkey will detect the `.user.js` file automatically and show an install screen. Click **Install**.
+
+**Option B — Manual install:**
+
+1. Copy the script URL:
+   ```
+   https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js
+   ```
+2. Click the Tampermonkey icon in your toolbar → **Create a new script**
+3. Delete the default template content
+4. Open the URL above in a new tab, select all (`Ctrl+A`), copy (`Ctrl+C`)
+5. Paste into the Tampermonkey editor (`Ctrl+V`) → **File → Save** (`Ctrl+S`)
+
+### Step 3 — Enjoy!
+
+1. Visit [retroachievements.org](https://retroachievements.org)
+2. Navigate to any game page to see ROM search, translations, and more
+3. Visit your profile (`/user/{username}`) to see the Player Insights Dashboard
+4. Click the **⚙️ RA Toolkit** button (bottom-right corner) to configure settings
+
+> **Auto-update:** The script updates automatically via Tampermonkey when a new version is pushed to this repository. You can also check for updates manually: Tampermonkey icon → **Utilities** → **Check for userscript updates**.
 
 ---
 
