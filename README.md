@@ -14,7 +14,7 @@
   <a href="https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js">
     <img src="https://img.shields.io/badge/Install-Tampermonkey-green?logo=tampermonkey" alt="Install">
   </a>
-  <img src="https://img.shields.io/badge/version-2.6.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.7.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
 </p>
 
@@ -117,6 +117,13 @@ Injected on user profile pages (`/user/{username}`) with 6 modules:
 - **Mobile layout support** — sidebar injections work on viewports <1024px
 - **Guide link detection** — shows 📖 RA Achievement Guide button when a guide exists for the game
 
+### 🆕 v2.7.0
+- **Achievement rarity indicator** — color-coded badges on each achievement by unlock %:
+  - ⚪ Common (≥50%), 🟢 Uncommon (25–49%), 🔵 Rare (10–24%), 🟣 Very Rare (5–9%), 🟡 Ultra Rare (2–4%), 🔴 Legendary (<2%)
+  - Color-bordered achievement badges on profile pages
+  - Toggleable in settings
+- **Collapse/expand sidebar sections** — click ROMs or World Records headers to collapse/expand; state remembered across visits
+
 ---
 
 ## ⚙️ Configuration
@@ -156,14 +163,10 @@ Click the **⚙️ RA Toolkit** button (bottom-right corner) to open the setting
 - [ ] Missing consoles (Amstrad CPC, Apple II, Uzebox, WASM4)
 
 ### Low Priority
-- [ ] Export/Import settings (JSON)
-- [ ] Keyboard shortcuts (`T` translate, `D` downloads)
 - [x] ~~Custom accent color theme~~ ✅ v2.6.0
-- [ ] Achievement rarity indicator (color by unlock %)
-- [ ] Collapse/expand sidebar sections
-- [ ] Config sync across devices (GitHub Gist)
+- [x] ~~Achievement rarity indicator (color by unlock %)~~ ✅ v2.7.0
+- [x] ~~Collapse/expand sidebar sections~~ ✅ v2.7.0
 - [x] ~~Changelog popup after update~~ ✅ v2.6.0
-- [ ] Automated tests for utility functions
 
 ---
 

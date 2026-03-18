@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.6.1
+// @version      2.7.0
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,13 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.6.1";
+  var CURRENT_VERSION = "2.7.0";
 
   var CHANGELOG = [
+    { version: "2.7.0", changes: [
+      "Achievement rarity indicator — color-coded badges (Common, Uncommon, Rare, Very Rare, Ultra Rare, Legendary) on game page achievements and profile badges",
+      "Collapse/expand sidebar sections — click ROMs or World Records headers to collapse/expand, state persisted"
+    ]},
     { version: "2.6.1", changes: [
       "Save button in settings panel — 'Atualizar' button to confirm and reload"
     ]},
@@ -330,18 +334,32 @@
   // =========================================
   //      Cleanup previous injections
   // =========================================
+  // =========================================
+  //     Rarity Tier Helper
+  // =========================================
+  function getRarityTier(percentage) {
+    if (percentage >= 50) return { label: 'Common', color: '#a3a3a3', bg: 'rgba(163,163,163,0.12)' };
+    if (percentage >= 25) return { label: 'Uncommon', color: '#22c55e', bg: 'rgba(34,197,94,0.12)' };
+    if (percentage >= 10) return { label: 'Rare', color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' };
+    if (percentage >= 5)  return { label: 'Very Rare', color: '#a855f7', bg: 'rgba(168,85,247,0.12)' };
+    if (percentage >= 2)  return { label: 'Ultra Rare', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' };
+    return { label: 'Legendary', color: '#ef4444', bg: 'rgba(239,68,68,0.12)' };
+  }
+
   function cleanup() {
     const ids = ["enhanced-settings", "enhanced-romsdl", "enhanced-speedruncom",
                  "enhanced-custom-bg-style", "enhanced-glass-style", "enhanced-dl-style",
                  "enhanced-translate-style", "enhanced-pagination", "enhanced-pagination-style",
-                 "enhanced-guide-link", "enhanced-changelog-overlay"];
+                 "enhanced-guide-link", "enhanced-changelog-overlay", "enhanced-rarity-style",
+                 "enhanced-collapse-style"];
     ids.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.remove();
     });
-    // Remove injected video iframes and translate buttons
+    // Remove injected video iframes, translate buttons, and rarity badges
     document.querySelectorAll("iframe.enhanced-video").forEach(el => el.remove());
     document.querySelectorAll(".enhanced-translate-btn").forEach(el => el.remove());
+    document.querySelectorAll(".enhanced-rarity-badge").forEach(el => el.remove());
   }
 
   // =========================================
@@ -363,6 +381,7 @@
   var enableHashCheck = await GM_getValue("enableHashCheck", true);
   var enableRomsFun = await GM_getValue("enableRomsFun", true);
   var enableDebugLog = await GM_getValue("enableDebugLog", false);
+  var enableRarityIndicator = await GM_getValue("enableRarityIndicator", true);
   var translateLang = await GM_getValue("translateLang", "pt-BR");
   var accentColor = await GM_getValue("accentColor", "#3b82f6");
 
@@ -863,6 +882,8 @@
           { id: "enhanced-glassEffect", key: "enableGlassEffect", val: enableGlassEffect, label: "Enable glass background effect" },
           { id: "enhanced-debuglog", key: "enableDebugLog", val: enableDebugLog, label: "Enable debug logging",
             hint: "Outputs detailed debug-level logs to the Tampermonkey console" },
+          { id: "enhanced-rarity", key: "enableRarityIndicator", val: enableRarityIndicator, label: "Achievement rarity indicator",
+            hint: "Color-coded badges on achievements by unlock % (Common, Uncommon, Rare, Very Rare, Ultra Rare, Legendary)" },
         ];
 
         var rowsHtml = settingsItems.map(function (item) {
@@ -1175,6 +1196,106 @@
       }
     }
 
+    // =========================================
+    //    Collapse/Expand Sidebar Sections
+    // =========================================
+    function injectCollapseStyle() {
+      if (document.getElementById("enhanced-collapse-style")) return;
+      var style = document.createElement("style");
+      style.id = "enhanced-collapse-style";
+      style.textContent = `
+        .enhanced-collapse-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          cursor: pointer;
+          user-select: none;
+          padding: 2px 0;
+          transition: opacity 0.15s;
+        }
+        .enhanced-collapse-header:hover {
+          opacity: 0.8;
+        }
+        .enhanced-collapse-arrow {
+          font-size: 0.75em;
+          transition: transform 0.2s ease;
+          color: #a3a3a3;
+          margin-left: 6px;
+        }
+        .enhanced-collapse-arrow.collapsed {
+          transform: rotate(-90deg);
+        }
+        .enhanced-collapse-content {
+          overflow: hidden;
+          transition: max-height 0.25s ease, opacity 0.2s ease;
+          max-height: 2000px;
+          opacity: 1;
+        }
+        .enhanced-collapse-content.collapsed {
+          max-height: 0;
+          opacity: 0;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    function makeCollapsible(containerEl, sectionKey) {
+      if (!containerEl) return;
+      // Find the h3 header inside this container
+      var h3 = containerEl.querySelector("h3");
+      if (!h3 || h3.classList.contains("enhanced-collapse-header")) return;
+
+      injectCollapseStyle();
+
+      // Read persisted collapse state
+      var storeKey = "sidebarCollapsed_" + sectionKey;
+      var isCollapsed = false;
+
+      // Wrap all siblings after h3 into a content div
+      var contentDiv = document.createElement("div");
+      contentDiv.className = "enhanced-collapse-content";
+
+      // Collect all siblings after h3
+      var siblings = [];
+      var next = h3.nextSibling;
+      while (next) {
+        siblings.push(next);
+        next = next.nextSibling;
+      }
+      siblings.forEach(function (node) {
+        contentDiv.appendChild(node);
+      });
+      containerEl.appendChild(contentDiv);
+
+      // Make h3 a clickable header
+      h3.classList.add("enhanced-collapse-header");
+      var arrow = document.createElement("span");
+      arrow.className = "enhanced-collapse-arrow";
+      arrow.textContent = "▼";
+      h3.appendChild(arrow);
+
+      function setCollapseState(collapsed) {
+        isCollapsed = collapsed;
+        if (collapsed) {
+          contentDiv.classList.add("collapsed");
+          arrow.classList.add("collapsed");
+        } else {
+          contentDiv.classList.remove("collapsed");
+          arrow.classList.remove("collapsed");
+        }
+        GM_setValue(storeKey, collapsed);
+      }
+
+      h3.addEventListener("click", function () {
+        setCollapseState(!isCollapsed);
+      });
+
+      // Apply persisted state
+      Promise.resolve(GM_getValue(storeKey, false)).then(function (saved) {
+        if (saved) setCollapseState(true);
+      });
+    }
+
     // Show loading indicator while searching
     var loadingEl = null;
     function showLoading(container, text) {
@@ -1398,9 +1519,93 @@
     setTimeout(injectTranslateButtons, 1500);
     var achObserver = new MutationObserver(function () {
       injectTranslateButtons();
+      if (enableRarityIndicator) injectRarityIndicators();
     });
     var mainContent = document.querySelector("main") || document.body;
     achObserver.observe(mainContent, { childList: true, subtree: true });
+
+    // =========================================
+    //     Achievement Rarity Indicator
+    // =========================================
+    function injectRarityIndicators() {
+      // Inject rarity CSS once
+      if (!document.getElementById("enhanced-rarity-style")) {
+        var rarityStyle = document.createElement("style");
+        rarityStyle.id = "enhanced-rarity-style";
+        rarityStyle.textContent = `
+          .enhanced-rarity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 0.65em;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+            vertical-align: middle;
+            margin-left: 6px;
+            line-height: 1.6;
+          }
+          .enhanced-rarity-badge .enhanced-rarity-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+          }
+          li.game-set-item.enhanced-rarity-bordered {
+            border-left: 3px solid var(--enhanced-rarity-color, transparent);
+            padding-left: 4px;
+          }
+        `;
+        document.head.appendChild(rarityStyle);
+      }
+
+      var items = document.querySelectorAll("li.game-set-item");
+      items.forEach(function (li) {
+        if (li.querySelector(".enhanced-rarity-badge")) return;
+
+        // Parse unlock percentage from the DOM
+        // The RA site renders text like "XX.XX% unlock rate"
+        var percentage = null;
+        var textEls = li.querySelectorAll("p");
+        for (var i = 0; i < textEls.length; i++) {
+          var txt = textEls[i].textContent || '';
+          var match = txt.match(/([\d,.]+)\s*%\s*unlock\s*rate/i);
+          if (match) {
+            percentage = parseFloat(match[1].replace(',', '.'));
+            break;
+          }
+        }
+        if (percentage === null || isNaN(percentage)) return;
+
+        var tier = getRarityTier(percentage);
+
+        // Add colored left border
+        li.classList.add("enhanced-rarity-bordered");
+        li.style.setProperty("--enhanced-rarity-color", tier.color);
+
+        // Find the title area (after the title link) to inject the badge
+        var titleSpan = li.querySelector("a.font-medium");
+        if (!titleSpan) return;
+
+        var badge = document.createElement("span");
+        badge.className = "enhanced-rarity-badge";
+        badge.style.cssText = "color:" + tier.color + ";background:" + tier.bg + ";border:1px solid " + tier.color + "30;";
+        badge.title = percentage.toFixed(2) + "% unlock rate";
+        badge.innerHTML = '<span class="enhanced-rarity-dot" style="background:' + tier.color + ';"></span>' + tier.label;
+
+        // Insert after the title link's parent span
+        var titleContainer = titleSpan.parentElement;
+        if (titleContainer) {
+          titleContainer.appendChild(badge);
+        }
+      });
+    }
+
+    if (enableRarityIndicator) {
+      setTimeout(injectRarityIndicators, 1500);
+    }
     // Stop observing after 30s to avoid performance overhead
     setTimeout(function () { achObserver.disconnect(); }, 30000);
 
@@ -1678,6 +1883,7 @@
           '<a href="https://romsfun.com/?s=' + searchQuery + '" target="_blank" rel="noopener" style="color:#5b9bd5;font-size:0.85em;text-decoration:none;">&#x1F50D; RomsFun</a>' +
         '</div>';
       divRoms.appendChild(msgDiv);
+      makeCollapsible(divRoms, 'roms');
     }
 
     function createDownloads() {
@@ -1721,6 +1927,7 @@
         fromDiv.innerHTML = `From <a href="${encodeURI(collection.url)}" style="color: #5b9bd5;">${escapeHtml(collection.name)}</a>`;
         divRoms.appendChild(fromDiv);
       }
+      makeCollapsible(divRoms, 'roms');
     }
 
     function createDlcs() {
@@ -1763,6 +1970,7 @@
         div.textContent = "Couldn't find this game on Speedrun.com";
         divSpeedruncom.appendChild(div);
       }
+      makeCollapsible(divSpeedruncom, 'speedrun');
     }
 
     function createVideo() {
@@ -3522,6 +3730,7 @@
 
     // Cache for fetched achievement data per game
     var achievementCache = {};
+    var playerCountCache = {};
 
     function renderSkeletonBadges(container, count) {
       container.innerHTML = '';
@@ -3535,7 +3744,7 @@
 
     function fetchAndRenderAchievements(gameId, gridContainer, gameName) {
       if (achievementCache[gameId]) {
-        renderAchievementBadges(achievementCache[gameId], gridContainer, gameName);
+        renderAchievementBadges(achievementCache[gameId], gridContainer, gameName, playerCountCache[gameId] || 0);
         return;
       }
 
@@ -3549,14 +3758,16 @@
       gmFetch(url, 15000).then(function (resp) {
         var data = JSON.parse(resp.responseText);
         var achievements = data.Achievements || {};
+        var numPlayers = parseInt(data.NumDistinctPlayers, 10) || 0;
         achievementCache[gameId] = achievements;
-        renderAchievementBadges(achievements, gridContainer, gameName);
+        playerCountCache[gameId] = numPlayers;
+        renderAchievementBadges(achievements, gridContainer, gameName, numPlayers);
       }).catch(function () {
         gridContainer.innerHTML = '<div style="color:#ef4444;grid-column:1/-1;">Failed to load achievements</div>';
       });
     }
 
-    function renderAchievementBadges(achievements, gridContainer, gameName) {
+    function renderAchievementBadges(achievements, gridContainer, gameName, numPlayers) {
       gridContainer.innerHTML = '';
       var achList = Object.values(achievements);
 
@@ -3590,13 +3801,25 @@
           unlockText = '\nUnlocked ' + ach.DateEarned;
         }
 
+        // Calculate rarity from NumAwarded
+        var rarityText = '';
+        var borderStyle = '';
+        var numAwarded = parseInt(ach.NumAwarded, 10) || 0;
+        if (enableRarityIndicator && numPlayers > 0 && numAwarded > 0) {
+          var pct = (numAwarded / numPlayers) * 100;
+          var tier = getRarityTier(pct);
+          rarityText = '\n' + tier.label + ' (' + pct.toFixed(1) + '% unlock rate)';
+          borderStyle = 'border: 2px solid ' + tier.color + '; border-radius: 8px;';
+        }
+
         var titleText = ach.Title + '\n' + (ach.Description || '') + '\n' + (ach.Points || 0) + ' points'
-          + '\n' + (gameName || '') + unlockText;
+          + '\n' + (gameName || '') + unlockText + rarityText;
 
         var span = document.createElement('span');
         span.className = 'inline';
         span.innerHTML = '<a class="inline-block" href="https://retroachievements.org/achievement/' + ach.ID + '" title="' + escapeHtml(titleText) + '">'
-          + '<img loading="lazy" decoding="async" width="48" height="48" src="' + badgeUrl + '" alt="' + escapeHtml(ach.Title || '') + '" class="' + imgClass + '">'
+          + '<img loading="lazy" decoding="async" width="48" height="48" src="' + badgeUrl + '" alt="' + escapeHtml(ach.Title || '') + '" class="' + imgClass + '"'
+          + (borderStyle ? ' style="' + borderStyle + '"' : '') + '>'
           + '</a>';
 
         gridContainer.appendChild(span);
