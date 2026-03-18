@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.8.0
+// @version      2.8.1
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,12 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.8.0";
+  var CURRENT_VERSION = "2.8.1";
 
   var CHANGELOG = [
+    { version: "2.8.1", changes: [
+      "Timeline layout fix — uniform cell sizes and month labels overflow like GitHub's contribution graph"
+    ]},
     { version: "2.8.0", changes: [
       "1-year Activity Timeline — GitHub-style contribution heatmap (52 weeks × 7 days) replacing the 30-day grid",
       "Streak Tracker now uses 365-day data for more accurate streak and active-day counts",
