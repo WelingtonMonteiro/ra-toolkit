@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.7.0
+// @version      2.7.1
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,12 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.7.0";
+  var CURRENT_VERSION = "2.7.1";
 
   var CHANGELOG = [
+    { version: "2.7.1", changes: [
+      "Missing consoles — added ROM search support for Amstrad CPC, Apple II, Uzebox, and WASM-4"
+    ]},
     { version: "2.7.0", changes: [
       "Achievement rarity indicator — color-coded badges (Common, Uncommon, Rare, Very Rare, Ultra Rare, Legendary) on game page achievements and profile badges",
       "Collapse/expand sidebar sections — click ROMs or World Records headers to collapse/expand, state persisted"
@@ -473,7 +476,10 @@
     INTERTONVC4000: "Interton VC 4000",
     MEGADUCK: "Mega Duck",
     WATARA: "Watara Supervision",
-    ZEEBO: "Zeebo"
+    ZEEBO: "Zeebo",
+    AMSTRADCPC: "Amstrad CPC",
+    UZEBOX: "Uzebox",
+    WASM4: "WASM-4"
   };
 
   const SRConsole = {
@@ -518,7 +524,8 @@
     POKÉMONMINI: "vm9vr1e3",
     NINTENDODS: "7g6m8erk",
     PLAYSTATIONPORTABLE: "5negk9y7",
-    WII: "v06dk3e4"
+    WII: "v06dk3e4",
+    AMSTRADCPC: "5negykey"
   };
 
   // =========================================
@@ -794,6 +801,17 @@
     [RAConsole.ZEEBO]: {
       name: "Zeebo - Zeebo",
       urls: ["https://myrient.erista.me/files/No-Intro/Zeebo%20-%20Zeebo/"]
+    },
+    [RAConsole.AMSTRADCPC]: {
+      name: "Amstrad - CPC",
+      urls: ["https://myrient.erista.me/files/No-Intro/Amstrad%20-%20CPC%20%28Misc%29/"]
+    },
+    [RAConsole.APPLEII]: {
+      name: "Apple - II",
+      urls: [
+        "https://myrient.erista.me/files/No-Intro/Apple%20-%20II%20%28WOZ%29/",
+        "https://myrient.erista.me/files/No-Intro/Apple%20-%20II%20%28A2R%29/"
+      ]
     },
   };
 
@@ -2027,6 +2045,7 @@
         [RAConsole.SG1000]: SRConsole.MASTERSYSTEM,
         [RAConsole.SNES]: SRConsole.SNES,
         [RAConsole.VIRTUALBOY]: SRConsole.VIRTUALBOY,
+        [RAConsole.AMSTRADCPC]: SRConsole.AMSTRADCPC,
       };
       return map[cName] || "";
     }

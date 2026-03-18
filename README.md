@@ -14,7 +14,7 @@
   <a href="https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js">
     <img src="https://img.shields.io/badge/Install-Tampermonkey-green?logo=tampermonkey" alt="Install">
   </a>
-  <img src="https://img.shields.io/badge/version-2.7.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.7.1-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
 </p>
 
@@ -160,7 +160,7 @@ Click the **⚙️ RA Toolkit** button (bottom-right corner) to open the setting
 - [ ] "Translate All" bulk button
 - [ ] Achievement filter (Unlocked / Locked / All)
 - [x] ~~Guide links detection (RA Guides)~~ ✅ v2.6.0
-- [ ] Missing consoles (Amstrad CPC, Apple II, Uzebox, WASM4)
+- [x] ~~Missing consoles (Amstrad CPC, Apple II, Uzebox, WASM4)~~ ✅ v2.7.1
 
 ### Low Priority
 - [x] ~~Custom accent color theme~~ ✅ v2.6.0
