@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.8.1
+// @version      2.8.2
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,12 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.8.1";
+  var CURRENT_VERSION = "2.8.2";
 
   var CHANGELOG = [
+    { version: "2.8.2", changes: [
+      "Emuparadise download fix — correct game ID extraction and direct download link with workaround"
+    ]},
     { version: "2.8.1", changes: [
       "Timeline layout fix — uniform cell sizes and month labels overflow like GitHub's contribution graph"
     ]},
@@ -2401,7 +2404,7 @@
     //       Emuparadise Search Function
     // =========================================
     function searchEmuparadise() {
-      var mainDir = "https://www.emuparadise.me/";
+      var mainDir = "https://www.emuparadise.me";
       var consoleUrlMap = {
         [RAConsole.SNES]: "Super_Nintendo_Entertainment_System_(SNES)_ROMs/List-All-Titles/5",
         [RAConsole.NES]: "Nintendo_Entertainment_System_ROMs/List-All-Titles/13",
@@ -2431,19 +2434,26 @@
       var consoleUrl = consoleUrlMap[consoleName];
       if (!consoleUrl) return Promise.resolve();
 
-      return gmFetch(mainDir + consoleUrl).then(function (response) {
+      return gmFetch(mainDir + "/" + consoleUrl).then(function (response) {
         var doc = parseHtml(response.responseText);
         var items = doc.querySelectorAll(".index.gamelist");
 
+        function extractGid(href) {
+          // href like /Console_ROMs/Game_Name/151200 — extract the numeric ID at the end
+          var parts = href.replace(/\/+$/, '').split('/');
+          var last = parts[parts.length - 1] || '';
+          var match = last.match(/^(\d+)/);
+          return match ? match[1] : null;
+        }
+
         items.forEach(function (el) {
           var href = el.getAttribute("href") || "";
-          var epGameId = /([^\/]+)\/?$/g.exec(href);
-          if (!epGameId) return;
-          epGameId = epGameId[0];
+          var gid = extractGid(href);
+          if (!gid) return;
           if (refinedCompare(el.textContent, gameTitle)) {
             results.push({
               name: el.textContent,
-              url: "https://www.emuparadise.me/roms/get-download.php?gid=" + epGameId + "&test=true"
+              url: mainDir + "/roms/get-download.php?gid=" + gid + "&test=true"
             });
           }
         });
@@ -2451,13 +2461,12 @@
         if (results.length === 0) {
           items.forEach(function (el) {
             var href = el.getAttribute("href") || "";
-            var epGameId = /([^\/]+)\/?$/g.exec(href);
-            if (!epGameId) return;
-            epGameId = epGameId[0];
+            var gid = extractGid(href);
+            if (!gid) return;
             if (compare(el.textContent, gameTitle)) {
               results.push({
                 name: el.textContent,
-                url: "https://www.emuparadise.me/roms/get-download.php?gid=" + epGameId + "&test=true"
+                url: mainDir + "/roms/get-download.php?gid=" + gid + "&test=true"
               });
             }
           });
