@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.8.2
+// @version      2.8.3
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,12 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.8.2";
+  var CURRENT_VERSION = "2.8.3";
 
   var CHANGELOG = [
+    { version: "2.8.3", changes: [
+      "Emuparadise fix — links to download page instead of direct file (avoids referer block)"
+    ]},
     { version: "2.8.2", changes: [
       "Emuparadise download fix — correct game ID extraction and direct download link with workaround"
     ]},
@@ -2438,22 +2441,19 @@
         var doc = parseHtml(response.responseText);
         var items = doc.querySelectorAll(".index.gamelist");
 
-        function extractGid(href) {
-          // href like /Console_ROMs/Game_Name/151200 — extract the numeric ID at the end
-          var parts = href.replace(/\/+$/, '').split('/');
-          var last = parts[parts.length - 1] || '';
-          var match = last.match(/^(\d+)/);
-          return match ? match[1] : null;
+        function buildDownloadPageUrl(href) {
+          // href like /Console_ROMs/Game_Name/151200 — link to the download page
+          var clean = href.replace(/\/+$/, '');
+          return mainDir + clean + '-download';
         }
 
         items.forEach(function (el) {
           var href = el.getAttribute("href") || "";
-          var gid = extractGid(href);
-          if (!gid) return;
+          if (!href) return;
           if (refinedCompare(el.textContent, gameTitle)) {
             results.push({
               name: el.textContent,
-              url: mainDir + "/roms/get-download.php?gid=" + gid + "&test=true"
+              url: buildDownloadPageUrl(href)
             });
           }
         });
@@ -2461,12 +2461,11 @@
         if (results.length === 0) {
           items.forEach(function (el) {
             var href = el.getAttribute("href") || "";
-            var gid = extractGid(href);
-            if (!gid) return;
+            if (!href) return;
             if (compare(el.textContent, gameTitle)) {
               results.push({
                 name: el.textContent,
-                url: mainDir + "/roms/get-download.php?gid=" + gid + "&test=true"
+                url: buildDownloadPageUrl(href)
               });
             }
           });
