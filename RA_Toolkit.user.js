@@ -2993,17 +2993,19 @@
         }
         .enhanced-timeline-table {
           display: grid;
-          grid-template-columns: 28px repeat(53, 1fr);
-          grid-template-rows: auto repeat(7, 1fr);
           gap: 2px;
-          min-width: 580px;
+          min-width: 0;
+          width: 100%;
         }
         .enhanced-timeline-month-label {
           font-size: 0.55rem;
           color: #737373;
-          text-align: center;
+          text-align: left;
+          white-space: nowrap;
+          overflow: visible;
           line-height: 1;
           padding-bottom: 1px;
+          position: relative;
         }
         .enhanced-timeline-day-label {
           font-size: 0.55rem;
@@ -3015,7 +3017,6 @@
           line-height: 1;
         }
         .enhanced-timeline-cell {
-          aspect-ratio: 1;
           border-radius: 2px;
           min-width: 0;
           cursor: default;
@@ -3475,7 +3476,9 @@
 
       // Build HTML grid: row 0 = month labels, rows 1-7 = days
       var html = '<div class="enhanced-timeline-wrapper">';
-      html += '<div class="enhanced-timeline-table" style="grid-template-columns:28px repeat(' + numWeeks + ',1fr);grid-template-rows:auto repeat(7,1fr);">';
+      var cellSize = Math.max(8, Math.floor((content.offsetWidth - 32) / (numWeeks + 1)));
+      if (cellSize > 14) cellSize = 14;
+      html += '<div class="enhanced-timeline-table" style="grid-template-columns:28px repeat(' + numWeeks + ',' + cellSize + 'px);grid-template-rows:auto repeat(7,' + cellSize + 'px);">';
 
       // Month label row — first cell is empty (day-label column)
       html += '<div></div>';
