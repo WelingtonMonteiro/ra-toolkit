@@ -1,0 +1,13 @@
+# RAWeb source (reference only)
+RAWeb/
+
+# IDE
+.idea/
+
+# Backup/reference files
+get-room-v2.backup.js
+Retro_Enhanced.user.js
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,147 @@
+<p align="center">
+  <img src="https://retroachievements.org/assets/images/ra-logo.webp" alt="RetroAchievements" width="96">
+</p>
+
+<h1 align="center">🎮 RA Toolkit</h1>
+
+<p align="center">
+  <strong>Toolkit for <a href="https://retroachievements.org">RetroAchievements.org</a></strong><br>
+  ROMs, translations, player dashboard, pagination and more.<br><br>
+  <em>Fork of <a href="https://openuserjs.org/scripts/Miagui/Retro_Enhanced">Retro Enhanced</a> by <a href="https://github.com/miagui">Miagui</a> — with major new features and improvements.</em>
+</p>
+
+<p align="center">
+  <a href="https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js">
+    <img src="https://img.shields.io/badge/Install-Tampermonkey-green?logo=tampermonkey" alt="Install">
+  </a>
+  <img src="https://img.shields.io/badge/version-2.5.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
+</p>
+
+---
+
+## 📥 Installation
+
+1. Install [Tampermonkey](https://www.tampermonkey.net/) in your browser
+2. **[Click here to install RA Toolkit](https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js)**
+3. Tampermonkey will ask to confirm — click **Install**
+4. Visit [retroachievements.org](https://retroachievements.org) and enjoy!
+
+> The script auto-updates via Tampermonkey when a new version is pushed to this repository.
+
+---
+
+## ✨ Features
+
+### 🔍 ROM Search
+- Multi-source ROM search: **Archive.org**, **Myrient**, **Emuparadise**, **RomsFun**
+- 🏆 **RA Trophy Badge** on ROMs verified against RA hash database
+- 50+ consoles mapped with icons and short names
+- Smart title matching (normalized + region-aware)
+- Configurable per-source toggles in settings
+
+### 🌐 Achievement Translation
+- Per-card **Translate** button using MyMemory API (free tier)
+- Language selector in settings panel
+- Daily rate limiter (5000 chars/day) with persistent counter
+- Toggle between original and translated text
+
+### 📊 Player Insights Dashboard
+Injected on user profile pages (`/user/{username}`) with 6 modules:
+
+| Module | Description |
+|--------|-------------|
+| **Stats Cards** | Games Played, Mastered, Mastery Rate, Points & Rank |
+| **Almost There** | Top 5 games closest to 100% (≥50% progress) |
+| **Console Breakdown** | Top 10 consoles with horizontal bars and icons |
+| **Streak Tracker** | Current streak, best streak, active days (30d) |
+| **Rarest Achievements** | Top 5 by TrueRatio with badge and multiplier |
+| **Activity Timeline** | 30-day contribution grid (GitHub-style) |
+
+### 📄 Profile Pagination
+- Paginated "Last Games Played" with numbered buttons
+- Items per page selector (5/10/15/20/30/50)
+- Cards rendered with native RA CSS classes
+- Achievement toggle per game card (expand badges)
+- Skeleton loaders during page transitions
+
+### 🎬 Extras
+- Speedrun.com video embed on game pages
+- SPA-aware (Inertia.js navigation support)
+- Glass-effect settings panel with styled toggles
+- Structured logging (debug/info/warn/error)
+
+---
+
+## ⚙️ Configuration
+
+Click the **⚙️ RA Toolkit** button (bottom-right corner) to open the settings panel. You can toggle:
+
+- ROM search sources (Archive.org, Myrient, Emuparadise, RomsFun)
+- Hash verification (RA Trophy badges)
+- Translation language
+- Debug logging
+
+---
+
+## 🛠️ Tech Stack
+
+- **Tampermonkey** userscript (vanilla JS, no frameworks)
+- **RA Web API** (`API_GetUserSummary`, `API_GetUserRecentlyPlayedGames`, `API_GetUserRecentAchievements`, `API_GetGameInfoAndUserProgress`, `API_GetGameHashes`)
+- **MyMemory API** for translations
+- **DOM scraping** for console breakdown (Progression Status section)
+- **GM_xmlhttpRequest** for cross-origin requests
+- **GM_setValue/GM_getValue** for persistent settings and rate limiting
+
+---
+
+## 📋 Roadmap
+
+### High Priority
+- [ ] Cache search results (`GM_setValue` with TTL)
+- [ ] Light mode support (detect `data-scheme`)
+- [ ] Mobile layout support (`GameShowMobileRoot`)
+
+### Medium Priority
+- [ ] "Translate All" bulk button
+- [ ] Achievement filter (Unlocked / Locked / All)
+- [ ] Quick progress bar in sidebar
+- [ ] Guide links detection (RA Guides)
+- [ ] Friend comparison (`API_GetUserGameProgress`)
+- [ ] Missing consoles (Amstrad CPC, Apple II, Uzebox, WASM4)
+
+### Low Priority
+- [ ] Export/Import settings (JSON)
+- [ ] Keyboard shortcuts (`T` translate, `D` downloads)
+- [ ] Custom accent color theme
+- [ ] Achievement rarity indicator (color by unlock %)
+- [ ] Collapse/expand sidebar sections
+- [ ] Config sync across devices (GitHub Gist)
+- [ ] Changelog popup after update
+- [ ] Automated tests for utility functions
+
+---
+
+## 🙏 Credits & Origin
+
+This project is a **fork** of [**Retro Enhanced**](https://openuserjs.org/scripts/Miagui/Retro_Enhanced) (v1.4.5) by [**Miagui**](https://github.com/miagui), which provided the original ROM search functionality for RetroAchievements.org.
+
+**RA Toolkit** builds on that foundation with extensive new features:
+- 📊 Player Insights Dashboard (6 analytical modules)
+- 🌐 Achievement translation system (MyMemory API)
+- 📄 Profile pagination with skeleton loaders
+- 🏆 RA Trophy badge for hash-verified ROMs
+- 🔍 Additional ROM sources (RomsFun)
+- ⚙️ Redesigned settings panel
+- 🔄 SPA navigation support (Inertia.js)
+- 📈 Rate limiting, structured logging, and more
+
+Thank you **Miagui** for the original script that made this possible! 🎮
+
+- Built for the [RetroAchievements](https://retroachievements.org) community
+
+---
+
+## 📄 License
+
+[MIT](LICENSE)
