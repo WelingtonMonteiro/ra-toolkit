@@ -14,7 +14,7 @@
   <a href="https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js">
     <img src="https://img.shields.io/badge/Install-Tampermonkey-green?logo=tampermonkey" alt="Install">
   </a>
-  <img src="https://img.shields.io/badge/version-2.5.3-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.5.4-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
 </p>
 
@@ -100,7 +100,7 @@ Injected on user profile pages (`/user/{username}`) with 6 modules:
 
 ### 📅 Activity Timeline
 - GitHub-style contribution heatmap (52 weeks × 7 days) with month labels and day-of-week indicators
-- **3 toggle modes:** 🏆 Achievements (blue), 👑 Mastered (gold), ✅ Beaten (gray)
+- **3 toggle modes (multi-select):** 🏆 Achievements (blue), 👑 Mastered (gold), ✅ Beaten (gray) — select any combination; combined view uses emerald green
 - Total achievements count shown in section title
 - Year shown in cell tooltips (e.g. "Mar 19, 2026: 5 achievements")
 - Streak Tracker uses 365-day data for accurate streak and active-day counts
@@ -135,6 +135,10 @@ Injected on user profile pages (`/user/{username}`) with 6 modules:
 ---
 
 ## 📋 Changelog
+
+### v2.5.4
+- Activity Timeline: multi-select toggle buttons — select multiple modes (Achievements + Mastered + Beaten) to see combined heatmap
+- Activity Timeline: combined mode uses emerald green color scheme with per-mode breakdown in tooltips and footer
 
 ### v2.5.3
 - Updated install/update URLs for Greasy Fork publication

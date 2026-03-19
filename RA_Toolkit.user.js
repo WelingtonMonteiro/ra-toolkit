@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.5.3
+// @version      2.5.4
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,14 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.5.3";
+  var CURRENT_VERSION = "2.5.4";
 
   var CHANGELOG = [
+    { version: "2.5.4", changes: [
+      "Activity Timeline: multi-select toggle buttons — select multiple modes (Achievements + Mastered + Beaten) to see combined heatmap",
+      "Activity Timeline: combined mode uses emerald green color scheme",
+      "Activity Timeline: tooltip and footer show per-mode breakdown when multiple modes are active"
+    ]},
     { version: "2.5.3", changes: [
       "Updated install/update URLs for Greasy Fork"
     ]},
@@ -3113,6 +3118,11 @@
         .enhanced-timeline-cell.beaten-2 { background: rgba(163,163,163,0.5); }
         .enhanced-timeline-cell.beaten-3 { background: rgba(163,163,163,0.75); }
         .enhanced-timeline-cell.beaten-4 { background: #a3a3a3; }
+        /* Combined mode (emerald) */
+        .enhanced-timeline-cell.combined-1 { background: rgba(16,185,129,0.25); }
+        .enhanced-timeline-cell.combined-2 { background: rgba(16,185,129,0.5); }
+        .enhanced-timeline-cell.combined-3 { background: rgba(16,185,129,0.75); }
+        .enhanced-timeline-cell.combined-4 { background: #10b981; }
         .enhanced-timeline-footer {
           display: flex;
           justify-content: space-between;
@@ -3611,13 +3621,39 @@
         }
       };
 
-      var currentMode = 'achievements';
+      var activeModes = { achievements: true, mastered: false, beaten: false };
 
-      function buildGrid(mode) {
-        var dm = mode.dayMap;
+      var combinedTheme = {
+        prefix: 'combined',
+        color: '#10b981',
+        bg: 'rgba(16,185,129,0.12)',
+        legendColors: ['rgba(255,255,255,0.04)','rgba(16,185,129,0.25)','rgba(16,185,129,0.5)','rgba(16,185,129,0.75)','#10b981']
+      };
+
+      function getActiveKeys() {
+        var keys = [];
+        for (var k in activeModes) { if (activeModes[k]) keys.push(k); }
+        return keys;
+      }
+
+      function buildGrid() {
+        var activeKeys = getActiveKeys();
+        if (activeKeys.length === 0) return '';
+
+        // Determine theme: single mode uses its own, multiple uses combined
+        var isSingle = activeKeys.length === 1;
+        var theme = isSingle ? modes[activeKeys[0]] : combinedTheme;
+
+        // Merge dayMaps from active modes
+        var mergedDayMap = {};
+        activeKeys.forEach(function (key) {
+          var dm = modes[key].dayMap;
+          for (var d in dm) mergedDayMap[d] = (mergedDayMap[d] || 0) + dm[d];
+        });
+
         var maxCount = 0;
         var cellData = baseCells.map(function (c) {
-          var count = dm[c.date] || 0;
+          var count = mergedDayMap[c.date] || 0;
           if (count > maxCount) maxCount = count;
           return { date: c.date, count: count, day: c.day, week: c.week, dow: c.dow };
         });
@@ -3634,6 +3670,8 @@
 
         var cellSize = Math.max(8, Math.floor((content.offsetWidth - 32) / (numWeeks + 1)));
         if (cellSize > 14) cellSize = 14;
+
+        var levelPrefix = theme.prefix === 'level' ? 'level' : theme.prefix;
 
         var html = '<div class="enhanced-timeline-wrapper">';
         html += '<div class="enhanced-timeline-table" style="grid-template-columns:28px repeat(' + numWeeks + ',' + cellSize + 'px);grid-template-rows:auto repeat(7,' + cellSize + 'px);">';
@@ -3657,8 +3695,6 @@
           cellMap[c.week][c.dow] = c;
         });
 
-        var levelPrefix = mode.prefix === 'level' ? 'level' : mode.prefix;
-
         for (var dow = 0; dow < 7; dow++) {
           if (dow === 1 || dow === 3 || dow === 5) {
             html += '<div class="enhanced-timeline-day-label">' + dayLabels[dow] + '</div>';
@@ -3669,8 +3705,17 @@
             var cell = cellMap[wi] && cellMap[wi][dow];
             if (cell) {
               var level = getLevel(cell.count);
-              var unit = cell.count === 1 ? mode.tooltipSingular : mode.tooltipPlural;
-              var label = monthNames[cell.day.getMonth()] + ' ' + cell.day.getDate() + ', ' + cell.day.getFullYear() + ': ' + cell.count + ' ' + unit;
+              // Build tooltip with per-mode breakdown
+              var tooltipParts = [];
+              activeKeys.forEach(function (key) {
+                var c = modes[key].dayMap[cell.date] || 0;
+                if (c > 0) {
+                  var unit = c === 1 ? modes[key].tooltipSingular : modes[key].tooltipPlural;
+                  tooltipParts.push(c + ' ' + unit);
+                }
+              });
+              var dateStr = monthNames[cell.day.getMonth()] + ' ' + cell.day.getDate() + ', ' + cell.day.getFullYear();
+              var label = tooltipParts.length > 0 ? dateStr + ': ' + tooltipParts.join(', ') : dateStr + ': No activity';
               var cls = level === 0 ? 'level-0' : (levelPrefix + '-' + level);
               html += '<div class="enhanced-timeline-cell ' + cls + '" title="' + escapeHtml(label) + '"></div>';
             } else {
@@ -3681,15 +3726,19 @@
 
         html += '</div></div>';
 
-        // Footer
+        // Footer with per-mode stats
+        var footerParts = [];
+        activeKeys.forEach(function (key) {
+          footerParts.push(modes[key].totalLabel(modes[key].dayMap));
+        });
         var activeDays = 0;
-        for (var k in dm) { if (dm[k] > 0) activeDays++; }
+        for (var k in mergedDayMap) { if (mergedDayMap[k] > 0) activeDays++; }
         html += '<div class="enhanced-timeline-footer">';
-        html += '<span>' + mode.totalLabel(dm) + ' in ' + activeDays + ' days</span>';
+        html += '<span>' + footerParts.join(', ') + ' in ' + activeDays + ' days</span>';
         html += '<div class="enhanced-timeline-legend">';
         html += '<span>Less</span>';
-        for (var li = 0; li < mode.legendColors.length; li++) {
-          html += '<div class="enhanced-timeline-legend-cell" style="background:' + mode.legendColors[li] + ';"></div>';
+        for (var li = 0; li < theme.legendColors.length; li++) {
+          html += '<div class="enhanced-timeline-legend-cell" style="background:' + theme.legendColors[li] + ';"></div>';
         }
         html += '<span>More</span>';
         html += '</div></div>';
@@ -3697,20 +3746,34 @@
         return html;
       }
 
-      function renderMode(modeKey) {
-        currentMode = modeKey;
+      function renderModes() {
         var gridContainer = content.querySelector('.enhanced-timeline-grid-area');
-        if (gridContainer) gridContainer.innerHTML = buildGrid(modes[modeKey]);
+        if (gridContainer) gridContainer.innerHTML = buildGrid();
         // Update toggle button active states
         var btns = content.querySelectorAll('.enhanced-timeline-toggle-btn');
         btns.forEach(function (btn) {
           var bm = btn.getAttribute('data-mode');
-          if (bm === modeKey) {
+          if (activeModes[bm]) {
             btn.classList.add('active');
           } else {
             btn.classList.remove('active');
           }
         });
+        // Update total in title
+        var totalEl = document.getElementById('enhanced-timeline-total');
+        if (totalEl) {
+          var activeKeys = getActiveKeys();
+          var totalParts = [];
+          activeKeys.forEach(function (key) {
+            var dm = modes[key].dayMap;
+            var t = 0;
+            for (var d in dm) t += dm[d];
+            if (key === 'achievements') totalParts.push(t + ' achievements');
+            else if (key === 'mastered') totalParts.push(t + ' mastered');
+            else if (key === 'beaten') totalParts.push(t + ' beaten');
+          });
+          totalEl.textContent = '— ' + totalParts.join(', ');
+        }
       }
 
       // Build toggle bar + grid container
@@ -3723,14 +3786,18 @@
           + m.label + '</button>';
       });
       outerHtml += '</div>';
-      outerHtml += '<div class="enhanced-timeline-grid-area">' + buildGrid(modes.achievements) + '</div>';
+      outerHtml += '<div class="enhanced-timeline-grid-area">' + buildGrid() + '</div>';
 
       content.innerHTML = outerHtml;
 
-      // Bind toggle clicks
+      // Bind toggle clicks (multi-select: toggle on/off, at least 1 must stay active)
       content.querySelectorAll('.enhanced-timeline-toggle-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
-          renderMode(btn.getAttribute('data-mode'));
+          var mode = btn.getAttribute('data-mode');
+          var activeKeys = getActiveKeys();
+          if (activeModes[mode] && activeKeys.length <= 1) return; // prevent deselecting last one
+          activeModes[mode] = !activeModes[mode];
+          renderModes();
         });
       });
     }
