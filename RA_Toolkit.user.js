@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.9.3
+// @version      2.9.4
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,12 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.9.3";
+  var CURRENT_VERSION = "2.9.4";
 
   var CHANGELOG = [
+    { version: "2.9.4", changes: [
+      "Fix: rarity indicators on game page now work with all languages (i18n-safe percentage parsing)"
+    ]},
     { version: "2.9.3", changes: [
       "Fix: enableRarityIndicator variable scope — rarity indicators now work correctly in achievement badges pagination"
     ]},
@@ -1611,18 +1614,35 @@
       items.forEach(function (li) {
         if (li.querySelector(".enhanced-rarity-badge")) return;
 
-        // Parse unlock percentage from the DOM
-        // The RA site renders text like "XX.XX% unlock rate"
+        // Parse unlock percentage from the DOM (language-agnostic)
+        // The dedicated unlock rate <p> has class "text-center text-2xs"
+        // e.g. "45.25% unlock rate" (en) or "45,25% taxa de desbloqueio" (pt-BR)
         var percentage = null;
-        var textEls = li.querySelectorAll("p");
-        for (var i = 0; i < textEls.length; i++) {
-          var txt = textEls[i].textContent || '';
-          var match = txt.match(/([\d,.]+)\s*%\s*unlock\s*rate/i);
+
+        // Primary: find the dedicated unlock rate paragraph by its text-center class
+        var centerPs = li.querySelectorAll("p.text-center");
+        for (var i = 0; i < centerPs.length; i++) {
+          var txt = centerPs[i].textContent || '';
+          var match = txt.match(/([\d,.]+)\s*%/);
           if (match) {
             percentage = parseFloat(match[1].replace(',', '.'));
             break;
           }
         }
+
+        // Fallback: any <p> with a percentage followed by unlock-related text
+        if (percentage === null) {
+          var textEls = li.querySelectorAll("p");
+          for (var j = 0; j < textEls.length; j++) {
+            var txt2 = textEls[j].textContent || '';
+            var match2 = txt2.match(/([\d,.]+)\s*%\s*(?:unlock\s*rate|taxa\s*de\s*desbloqueio)/i);
+            if (match2) {
+              percentage = parseFloat(match2[1].replace(',', '.'));
+              break;
+            }
+          }
+        }
+
         if (percentage === null || isNaN(percentage)) return;
 
         var tier = getRarityTier(percentage);
