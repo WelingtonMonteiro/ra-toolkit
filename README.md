@@ -14,7 +14,7 @@
   <a href="https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js">
     <img src="https://img.shields.io/badge/Install-Tampermonkey-green?logo=tampermonkey" alt="Install">
   </a>
-  <img src="https://img.shields.io/badge/version-2.5.5-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.6.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
 </p>
 
@@ -135,6 +135,11 @@ Injected on user profile pages (`/user/{username}`) with 6 modules:
 ---
 
 ## 📋 Changelog
+
+### v2.6.0
+- Enhanced User Stats: replaces native RA User Stats section with beautiful card-style layout
+- Primary stats with icons and colors: Points, Rank, Achievements, RetroRatio, Games Beaten, Beaten %
+- Expandable secondary stats: 7/30 day points, avg points/week, avg completion, softcore stats
 
 ### v2.5.5
 - Activity Timeline: rich custom tooltip with date header and per-mode icon breakdown (🏆 👑 ✅)

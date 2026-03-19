@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.5.5
+// @version      2.6.0
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,14 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.5.5";
+  var CURRENT_VERSION = "2.6.0";
 
   var CHANGELOG = [
+    { version: "2.6.0", changes: [
+      "Enhanced User Stats: replaces native User Stats with beautiful card-style layout",
+      "User Stats: primary stats (Points, Rank, Achievements, RetroRatio, Games Beaten) with icons and colors",
+      "User Stats: expandable secondary stats (7/30 day points, avg points/week, avg completion, softcore)"
+    ]},
     { version: "2.5.5", changes: [
       "Activity Timeline: rich custom tooltip with date header and per-mode icon breakdown",
       "Activity Timeline: tooltip shows \ud83c\udfc6 \ud83d\udc51 \u2705 icons next to each line"
@@ -2852,6 +2857,87 @@
           background: rgba(255,255,255,0.06);
           margin-top: 2px;
         }
+        /* Enhanced User Stats */
+        .enhanced-user-stats {
+          margin-bottom: 16px;
+        }
+        .enhanced-user-stats-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 10px;
+        }
+        .enhanced-user-stats-title {
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: #e4e4e7;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .enhanced-user-stats-toggle {
+          background: none;
+          border: none;
+          color: #737373;
+          cursor: pointer;
+          font-size: 0.7rem;
+          padding: 2px 6px;
+          border-radius: 4px;
+          transition: all 0.15s;
+        }
+        .enhanced-user-stats-toggle:hover {
+          color: #a3a3a3;
+          background: rgba(255,255,255,0.06);
+        }
+        .enhanced-user-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+          gap: 8px;
+        }
+        .enhanced-user-stats-card {
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 8px;
+          padding: 10px 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          transition: border-color 0.2s;
+        }
+        .enhanced-user-stats-card:hover {
+          border-color: rgba(255,255,255,0.15);
+        }
+        .enhanced-user-stats-card .stat-icon {
+          font-size: 0.85rem;
+          margin-bottom: 2px;
+        }
+        .enhanced-user-stats-card .stat-value {
+          font-size: 1.15rem;
+          font-weight: 700;
+          color: #e4e4e7;
+          line-height: 1.2;
+        }
+        .enhanced-user-stats-card .stat-label {
+          font-size: 0.65rem;
+          color: #737373;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .enhanced-user-stats-card .stat-sub {
+          font-size: 0.6rem;
+          color: #525252;
+        }
+        .enhanced-user-stats-secondary {
+          margin-top: 8px;
+          overflow: hidden;
+          max-height: 0;
+          opacity: 0;
+          transition: max-height 0.3s ease, opacity 0.2s ease, margin-top 0.2s ease;
+        }
+        .enhanced-user-stats-secondary.expanded {
+          max-height: 300px;
+          opacity: 1;
+        }
         /* Player Insights Dashboard */
         .enhanced-dashboard {
           margin-bottom: 16px;
@@ -3278,6 +3364,122 @@
     recentH2.parentNode.insertBefore(headingRow, recentH2);
     headingRow.appendChild(recentH2);
     headingRow.appendChild(perPageWrapper);
+
+    // =========================================
+    //   Enhanced User Stats (replaces native)
+    // =========================================
+    (function enhanceUserStats() {
+      var userStatsH2 = null;
+      var allH2s = document.querySelectorAll('h2');
+      for (var h = 0; h < allH2s.length; h++) {
+        if (/User\s*Stats/i.test(allH2s[h].textContent)) {
+          userStatsH2 = allH2s[h];
+          break;
+        }
+      }
+      if (!userStatsH2) return;
+
+      // Find the container wrapping the User Stats heading + collapsible content
+      var statsContainer = userStatsH2.closest('[x-data]');
+      if (!statsContainer) statsContainer = userStatsH2.parentElement.parentElement;
+      if (!statsContainer) return;
+
+      // Scrape all stat elements: label → value pairs
+      var statEls = statsContainer.querySelectorAll('.relative.flex.w-full.items-center.justify-between');
+      var scrapedStats = {};
+      statEls.forEach(function (el) {
+        var ps = el.querySelectorAll('p');
+        if (ps.length >= 2) {
+          var label = (ps[0].textContent || '').trim();
+          var value = (ps[1].textContent || '').trim();
+          if (label) scrapedStats[label] = value;
+        }
+      });
+
+      if (Object.keys(scrapedStats).length === 0) return;
+
+      // Stat definitions with icons, colors, and categorization
+      var primaryDefs = [
+        { key: 'Points', icon: '⭐', color: '#a78bfa', extractSub: true },
+        { key: 'Site rank', icon: '🏅', color: '#fbbf24' },
+        { key: 'Achievements unlocked', icon: '🏆', color: '#3b82f6' },
+        { key: 'RetroRatio', icon: '📊', color: '#10b981' },
+        { key: 'Total games beaten', icon: '🎮', color: '#f472b6' },
+        { key: 'Started games beaten', icon: '📈', color: '#38bdf8' },
+      ];
+
+      var secondaryDefs = [
+        { key: 'Points earned in the last 7 days', icon: '📅', color: '#e4e4e7', shortLabel: 'Points (7 days)' },
+        { key: 'Points earned in the last 30 days', icon: '📆', color: '#e4e4e7', shortLabel: 'Points (30 days)' },
+        { key: 'Average points per week', icon: '📉', color: '#e4e4e7', shortLabel: 'Avg points/week' },
+        { key: 'Average completion', icon: '🎯', color: '#e4e4e7', shortLabel: 'Avg completion' },
+        { key: 'Points (softcore)', icon: '⚡', color: '#737373' },
+        { key: 'Softcore rank', icon: '🥈', color: '#737373' },
+        { key: 'Achievements unlocked (softcore)', icon: '🔓', color: '#737373', shortLabel: 'Achievements (softcore)' },
+      ];
+
+      function buildCard(def) {
+        var rawValue = scrapedStats[def.key];
+        if (rawValue === undefined || rawValue === null) return '';
+        var mainValue = rawValue;
+        var subValue = '';
+        // Extract weighted points from "9,391 (27,649)" format
+        if (def.extractSub) {
+          var match = rawValue.match(/^([\d,.\s]+)\s*\((.+)\)$/);
+          if (match) {
+            mainValue = match[1].trim();
+            subValue = '(' + match[2].trim() + ' weighted)';
+          }
+        }
+        var label = def.shortLabel || def.key;
+        return '<div class="enhanced-user-stats-card">'
+          + '<div class="stat-icon">' + def.icon + '</div>'
+          + '<div class="stat-value" style="color:' + def.color + ';">' + escapeHtml(mainValue) + '</div>'
+          + '<div class="stat-label">' + escapeHtml(label) + '</div>'
+          + (subValue ? '<div class="stat-sub">' + escapeHtml(subValue) + '</div>' : '')
+          + '</div>';
+      }
+
+      var primaryHtml = '';
+      primaryDefs.forEach(function (def) { primaryHtml += buildCard(def); });
+
+      var secondaryHtml = '';
+      var hasSecondary = false;
+      secondaryDefs.forEach(function (def) {
+        var card = buildCard(def);
+        if (card) { secondaryHtml += card; hasSecondary = true; }
+      });
+
+      var enhancedDiv = document.createElement('div');
+      enhancedDiv.className = 'enhanced-user-stats';
+      enhancedDiv.innerHTML =
+        '<div class="enhanced-user-stats-header">'
+          + '<div class="enhanced-user-stats-title">📋 User Stats</div>'
+          + (hasSecondary ? '<button class="enhanced-user-stats-toggle" id="enhanced-user-stats-more">▼ more</button>' : '')
+        + '</div>'
+        + '<div class="enhanced-user-stats-grid">' + primaryHtml + '</div>'
+        + (hasSecondary
+            ? '<div class="enhanced-user-stats-secondary" id="enhanced-user-stats-extra">'
+              + '<div class="enhanced-user-stats-grid">' + secondaryHtml + '</div>'
+              + '</div>'
+            : '');
+
+      // Replace native section
+      statsContainer.parentNode.insertBefore(enhancedDiv, statsContainer);
+      statsContainer.style.display = 'none';
+
+      // Toggle secondary stats
+      if (hasSecondary) {
+        var moreBtn = document.getElementById('enhanced-user-stats-more');
+        var extraDiv = document.getElementById('enhanced-user-stats-extra');
+        if (moreBtn && extraDiv) {
+          moreBtn.addEventListener('click', function () {
+            var expanded = extraDiv.classList.toggle('expanded');
+            moreBtn.textContent = expanded ? '▲ less' : '▼ more';
+          });
+        }
+      }
+    })();
 
     // =========================================
     //   Player Insights Dashboard
