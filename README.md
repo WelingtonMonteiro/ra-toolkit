@@ -14,7 +14,7 @@
   <a href="https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js">
     <img src="https://img.shields.io/badge/Install-Tampermonkey-green?logo=tampermonkey" alt="Install">
   </a>
-  <img src="https://img.shields.io/badge/version-2.10.2-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.5.2-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
 </p>
 
@@ -78,10 +78,12 @@ Tampermonkey will detect the `.user.js` file automatically and show an install s
 - Smart title matching (normalized + region-aware)
 - Configurable per-source toggles in settings
 
-### 🌐 Achievement Translation
+### 🌐 Achievement & Wall Translation
 - Per-card **Translate** button using MyMemory API (free tier)
+- Wall comment translation on user profile pages
 - Language selector in settings panel
 - Daily rate limiter (5000 chars/day) with persistent counter
+- Auto-disable for texts exceeding 500-char API query limit
 - Toggle between original and translated text
 
 ### 📊 Player Insights Dashboard
@@ -94,44 +96,113 @@ Injected on user profile pages (`/user/{username}`) with 6 modules:
 | **Console Breakdown** | Top 10 consoles with horizontal bars and icons |
 | **Streak Tracker** | Current streak, best streak, active days (365d) |
 | **Rarest Achievements** | Top 5 by TrueRatio with badge and multiplier |
-| **Activity Timeline** | 365-day contribution heatmap (GitHub-style, 52 weeks × 7 days) |
+| **Activity Timeline** | 365-day contribution heatmap (GitHub-style, 52 weeks × 7 days) with toggle modes |
+
+### 📅 Activity Timeline
+- GitHub-style contribution heatmap (52 weeks × 7 days) with month labels and day-of-week indicators
+- **3 toggle modes:** 🏆 Achievements (blue), 👑 Mastered (gold), ✅ Beaten (gray)
+- Total achievements count shown in section title
+- Year shown in cell tooltips (e.g. "Mar 19, 2026: 5 achievements")
+- Streak Tracker uses 365-day data for accurate streak and active-day counts
+- Quarterly API fetching to bypass the 500-record limit
+
+### 🏅 Achievement Rarity Indicator
+- Color-coded badges on each achievement by unlock %:
+  - ⚪ Common (≥50%), 🟢 Uncommon (25–49%), 🔵 Rare (10–24%), 🟣 Very Rare (5–9%), 🟡 Ultra Rare (2–4%), 🔴 Legendary (<2%)
+- Color-bordered achievement badges on profile pages
+- Works on game pages with all languages (i18n-safe)
+- Toggleable in settings
+
+### 💬 User Wall Enhancements
+- **Linkify** — plain text URLs in comments become clickable links (opens in new tab)
+- **YouTube embed** — YouTube links in wall comments show an inline mini video player
+- **Image preview** — image links (png, jpg, gif, webp, etc.) show inline preview, click to open
 
 ### 📄 Profile Pagination
 - Paginated "Last Games Played" with numbered buttons
 - Items per page selector (5/10/15/20/30/50)
 - Cards rendered with native RA CSS classes
-- Achievement toggle per game card (expand badges)
+- Achievement toggle per game card (expand badges with rarity borders)
 - Skeleton loaders during page transitions
 
 ### 🎬 Extras
 - Speedrun.com video embed on game pages
+- Collapse/expand sidebar sections (ROMs, World Records) — state remembered
 - SPA-aware (Inertia.js navigation support)
 - Glass-effect settings panel with styled toggles
 - Structured logging (debug/info/warn/error)
 
-### 🆕 v2.6.0
-- **ROM search cache** — results cached for 24h (`GM_setValue` + TTL), no re-searching the same game
-- **Changelog popup** — shows what's new after each update
-- **Custom accent color** — color picker in settings to customize toggles, buttons, and UI highlights
-- **Light mode support** — auto-detects `data-scheme` (dark/light/black/system) and adapts colors
-- **Mobile layout support** — sidebar injections work on viewports <1024px
-- **Guide link detection** — shows 📖 RA Achievement Guide button when a guide exists for the game
+---
 
-### 🆕 v2.9.0
-- **User Wall linkify** — plain text URLs in comments become clickable links (opens in new tab)
-- **YouTube embed** — YouTube links in wall comments show an inline mini video player
+## 📋 Changelog
 
-### 🆕 v2.8.0
-- **1-year Activity Timeline** — GitHub-style contribution heatmap (52 weeks × 7 days) with month labels and day-of-week indicators
-- **Streak Tracker upgraded** — now uses 365-day data for accurate streak and active-day counts
-- **Quarterly API fetching** — uses `API_GetAchievementsEarnedBetween` in 4 chunks to bypass the 500-record limit
+### v2.5.2
+- Activity Timeline: tooltip now shows year (e.g. "Mar 19, 2026: 5 achievements")
 
-### 🆕 v2.7.0
-- **Achievement rarity indicator** — color-coded badges on each achievement by unlock %:
-  - ⚪ Common (≥50%), 🟢 Uncommon (25–49%), 🔵 Rare (10–24%), 🟣 Very Rare (5–9%), 🟡 Ultra Rare (2–4%), 🔴 Legendary (<2%)
-  - Color-bordered achievement badges on profile pages
-  - Toggleable in settings
-- **Collapse/expand sidebar sections** — click ROMs or World Records headers to collapse/expand; state remembered across visits
+### v2.5.1
+- Translate: disable button for texts exceeding 500-char API query limit
+- Translate: show "Too long" label with character count tooltip on hover
+
+### v2.5.0
+- Activity Timeline: total achievements count shown in title
+- Activity Timeline: toggle buttons to switch between Achievements (blue), Mastered (gold), and Beaten (gray) heatmaps
+- New API integration: GetUserAwards for mastered/beaten game dates
+
+### v2.4.4
+- Fix: rarity indicators on game page now work with all languages (i18n-safe percentage parsing)
+
+### v2.4.3
+- Fix: enableRarityIndicator variable scope — rarity indicators now work correctly in achievement badges pagination
+
+### v2.4.2
+- Image preview in wall comments — image links (png, jpg, gif, webp, etc.) show inline preview, click to open
+
+### v2.4.1
+- Activity Timeline moved above Player Insights stats for better visibility
+
+### v2.4.0
+- User Wall linkify — plain text URLs in comments become clickable links (opens in new tab)
+- YouTube embed — YouTube links in wall comments show an inline mini video player
+
+### v2.3.3
+- Emuparadise fix — links to download page instead of direct file (avoids referer block)
+
+### v2.3.2
+- Emuparadise download fix — correct game ID extraction and direct download link with workaround
+
+### v2.3.1
+- Timeline layout fix — uniform cell sizes and month labels overflow like GitHub's contribution graph
+
+### v2.3.0
+- 1-year Activity Timeline — GitHub-style contribution heatmap (52 weeks × 7 days)
+- Streak Tracker now uses 365-day data for more accurate streak and active-day counts
+- Yearly data fetched via quarterly API chunks to bypass 500-record limit
+
+### v2.2.1
+- Missing consoles — added ROM search support for Amstrad CPC, Apple II, Uzebox, and WASM-4
+
+### v2.2.0
+- Achievement rarity indicator — color-coded badges (Common to Legendary) on game page and profile
+- Collapse/expand sidebar sections — click headers to collapse/expand, state persisted
+
+### v2.1.1
+- Save button in settings panel — "Atualizar" button to confirm and reload
+
+### v2.1.0
+- ROM search cache (24h TTL)
+- Changelog popup after updates
+- Custom accent color (color picker in settings)
+- Light mode support (adapts to RA site theme)
+- Mobile layout support (sidebar injections on mobile)
+- Guide link detection (RA Guide button on game pages)
+
+### v2.0.0
+- Player Insights Dashboard (6 modules)
+- RomsFun ROM source
+- RA Trophy badge for hash-verified ROMs
+- Pagination skeleton loaders
+- Previous/Next pagination buttons
+- MyMemory API rate limiter
 
 ---
 
@@ -142,6 +213,7 @@ Click the **⚙️ RA Toolkit** button (bottom-right corner) to open the setting
 - ROM search sources (Archive.org, Myrient, Emuparadise, RomsFun)
 - Hash verification (RA Trophy badges)
 - Translation language
+- Achievement rarity indicator
 - Custom accent color (color picker + reset)
 - Debug logging
 
@@ -150,32 +222,11 @@ Click the **⚙️ RA Toolkit** button (bottom-right corner) to open the setting
 ## 🛠️ Tech Stack
 
 - **Tampermonkey** userscript (vanilla JS, no frameworks)
-- **RA Web API** (`API_GetUserSummary`, `API_GetUserRecentlyPlayedGames`, `API_GetUserRecentAchievements`, `API_GetAchievementsEarnedBetween`, `API_GetGameInfoAndUserProgress`, `API_GetGameHashes`)
+- **RA Web API** (`API_GetUserSummary`, `API_GetUserRecentlyPlayedGames`, `API_GetUserRecentAchievements`, `API_GetAchievementsEarnedBetween`, `API_GetGameInfoAndUserProgress`, `API_GetGameHashes`, `API_GetUserAwards`)
 - **MyMemory API** for translations
 - **DOM scraping** for console breakdown (Progression Status section)
 - **GM_xmlhttpRequest** for cross-origin requests
 - **GM_setValue/GM_getValue** for persistent settings and rate limiting
-
----
-
-## 📋 Roadmap
-
-### High Priority
-- [x] ~~Cache search results (`GM_setValue` with TTL)~~ ✅ v2.6.0
-- [x] ~~Light mode support (detect `data-scheme`)~~ ✅ v2.6.0
-- [x] ~~Mobile layout support (`GameShowMobileRoot`)~~ ✅ v2.6.0
-
-### Medium Priority
-- [ ] "Translate All" bulk button
-- [ ] Achievement filter (Unlocked / Locked / All)
-- [x] ~~Guide links detection (RA Guides)~~ ✅ v2.6.0
-- [x] ~~Missing consoles (Amstrad CPC, Apple II, Uzebox, WASM4)~~ ✅ v2.7.1
-
-### Low Priority
-- [x] ~~Custom accent color theme~~ ✅ v2.6.0
-- [x] ~~Achievement rarity indicator (color by unlock %)~~ ✅ v2.7.0
-- [x] ~~Collapse/expand sidebar sections~~ ✅ v2.7.0
-- [x] ~~Changelog popup after update~~ ✅ v2.6.0
 
 ---
 
@@ -185,13 +236,15 @@ This project is a **fork** of [**Retro Enhanced**](https://openuserjs.org/script
 
 **RA Toolkit** builds on that foundation with extensive new features:
 - 📊 Player Insights Dashboard (6 analytical modules)
-- 🌐 Achievement translation system (MyMemory API)
+- 📅 Activity Timeline with 3 toggle modes (Achievements/Mastered/Beaten)
+- 🌐 Achievement & wall comment translation system
+- 💬 User Wall enhancements (linkify, YouTube, image preview)
+- 🏅 Achievement rarity indicator (6 tiers)
 - 📄 Profile pagination with skeleton loaders
 - 🏆 RA Trophy badge for hash-verified ROMs
 - 🔍 Additional ROM sources (RomsFun)
-- ⚙️ Redesigned settings panel
+- ⚙️ Redesigned settings panel with accent color
 - 🔄 SPA navigation support (Inertia.js)
-- 📈 Rate limiting, structured logging, and more
 
 Thank you **Miagui** for the original script that made this possible! 🎮
 

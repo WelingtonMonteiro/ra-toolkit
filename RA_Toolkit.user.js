@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.10.2
+// @version      2.5.2
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -9,8 +9,8 @@
 // @icon         https://retroachievements.org/assets/images/ra-logo.webp
 // @homepageURL  https://github.com/WelingtonMonteiro/ra-toolkit
 // @supportURL   https://github.com/WelingtonMonteiro/ra-toolkit/issues
-// @updateURL    https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js
-// @downloadURL  https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js
+// @updateURL    https://raw.githubusercontent.com/WelingtonMonteiro/ra-toolkit/main/RA_Toolkit.user.js
+// @downloadURL  https://raw.githubusercontent.com/WelingtonMonteiro/ra-toolkit/main/RA_Toolkit.user.js
 // @grant        GM_xmlhttpRequest
 // @grant        GM_log
 // @grant        GM_setValue
@@ -207,62 +207,62 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.10.2";
+  var CURRENT_VERSION = "2.5.2";
 
   var CHANGELOG = [
-    { version: "2.10.2", changes: [
+    { version: "2.5.2", changes: [
       "Activity Timeline: tooltip now shows year (e.g. 'Mar 19, 2026: 5 achievements')"
     ]},
-    { version: "2.10.1", changes: [
+    { version: "2.5.1", changes: [
       "Translate: disable button for texts exceeding 500-char API query limit",
       "Translate: show 'Too long' label with character count tooltip on hover"
     ]},
-    { version: "2.10.0", changes: [
+    { version: "2.5.0", changes: [
       "Activity Timeline: total achievements count shown in title",
       "Activity Timeline: toggle buttons to switch between Achievements (blue), Mastered (gold), and Beaten (gray) heatmaps",
       "New API integration: GetUserAwards for mastered/beaten game dates"
     ]},
-    { version: "2.9.4", changes: [
+    { version: "2.4.4", changes: [
       "Fix: rarity indicators on game page now work with all languages (i18n-safe percentage parsing)"
     ]},
-    { version: "2.9.3", changes: [
+    { version: "2.4.3", changes: [
       "Fix: enableRarityIndicator variable scope — rarity indicators now work correctly in achievement badges pagination"
     ]},
-    { version: "2.9.2", changes: [
+    { version: "2.4.2", changes: [
       "Image preview in wall comments — image links (png, jpg, gif, webp, etc.) show inline preview, click to open"
     ]},
-    { version: "2.9.1", changes: [
+    { version: "2.4.1", changes: [
       "Activity Timeline moved above Player Insights stats for better visibility"
     ]},
-    { version: "2.9.0", changes: [
+    { version: "2.4.0", changes: [
       "User Wall linkify — plain text URLs in comments become clickable links (opens in new tab)",
       "YouTube embed — YouTube links in wall comments show an inline mini video player"
     ]},
-    { version: "2.8.3", changes: [
+    { version: "2.3.3", changes: [
       "Emuparadise fix — links to download page instead of direct file (avoids referer block)"
     ]},
-    { version: "2.8.2", changes: [
+    { version: "2.3.2", changes: [
       "Emuparadise download fix — correct game ID extraction and direct download link with workaround"
     ]},
-    { version: "2.8.1", changes: [
+    { version: "2.3.1", changes: [
       "Timeline layout fix — uniform cell sizes and month labels overflow like GitHub's contribution graph"
     ]},
-    { version: "2.8.0", changes: [
+    { version: "2.3.0", changes: [
       "1-year Activity Timeline — GitHub-style contribution heatmap (52 weeks × 7 days) replacing the 30-day grid",
       "Streak Tracker now uses 365-day data for more accurate streak and active-day counts",
       "Yearly data fetched via quarterly API chunks (API_GetAchievementsEarnedBetween) to bypass 500-record limit"
     ]},
-    { version: "2.7.1", changes: [
+    { version: "2.2.1", changes: [
       "Missing consoles — added ROM search support for Amstrad CPC, Apple II, Uzebox, and WASM-4"
     ]},
-    { version: "2.7.0", changes: [
+    { version: "2.2.0", changes: [
       "Achievement rarity indicator — color-coded badges (Common, Uncommon, Rare, Very Rare, Ultra Rare, Legendary) on game page achievements and profile badges",
       "Collapse/expand sidebar sections — click ROMs or World Records headers to collapse/expand, state persisted"
     ]},
-    { version: "2.6.1", changes: [
+    { version: "2.1.1", changes: [
       "Save button in settings panel — 'Atualizar' button to confirm and reload"
     ]},
-    { version: "2.6.0", changes: [
+    { version: "2.1.0", changes: [
       "ROM search cache (24h TTL) — no more re-searching the same game",
       "Changelog popup — shows what's new after updates",
       "Custom accent color — choose your highlight color in settings",
@@ -270,7 +270,7 @@
       "Mobile layout support — sidebar injections work on mobile (<1024px)",
       "Guide link detection — shows RA Guide link on game pages when available"
     ]},
-    { version: "2.5.0", changes: [
+    { version: "2.0.0", changes: [
       "Player Insights Dashboard (6 modules)",
       "RomsFun ROM source",
       "RA Trophy badge for hash-verified ROMs",
