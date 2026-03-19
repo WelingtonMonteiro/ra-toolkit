@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.10.1
+// @version      2.10.2
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,12 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.10.1";
+  var CURRENT_VERSION = "2.10.2";
 
   var CHANGELOG = [
+    { version: "2.10.2", changes: [
+      "Activity Timeline: tooltip now shows year (e.g. 'Mar 19, 2026: 5 achievements')"
+    ]},
     { version: "2.10.1", changes: [
       "Translate: disable button for texts exceeding 500-char API query limit",
       "Translate: show 'Too long' label with character count tooltip on hover"
@@ -3664,7 +3667,7 @@
             if (cell) {
               var level = getLevel(cell.count);
               var unit = cell.count === 1 ? mode.tooltipSingular : mode.tooltipPlural;
-              var label = monthNames[cell.day.getMonth()] + ' ' + cell.day.getDate() + ': ' + cell.count + ' ' + unit;
+              var label = monthNames[cell.day.getMonth()] + ' ' + cell.day.getDate() + ', ' + cell.day.getFullYear() + ': ' + cell.count + ' ' + unit;
               var cls = level === 0 ? 'level-0' : (levelPrefix + '-' + level);
               html += '<div class="enhanced-timeline-cell ' + cls + '" title="' + escapeHtml(label) + '"></div>';
             } else {
