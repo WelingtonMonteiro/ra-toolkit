@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.9.1
+// @version      2.9.2
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,12 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.9.1";
+  var CURRENT_VERSION = "2.9.2";
 
   var CHANGELOG = [
+    { version: "2.9.2", changes: [
+      "Image preview in wall comments — image links (png, jpg, gif, webp, etc.) show inline preview, click to open"
+    ]},
     { version: "2.9.1", changes: [
       "Activity Timeline moved above Player Insights stats for better visibility"
     ]},
@@ -4242,8 +4245,26 @@
           height: 100%;
           border: 0;
         }
+        .enhanced-img-preview {
+          display: block;
+          margin-top: 6px;
+          max-width: 360px;
+          max-height: 300px;
+          border-radius: 6px;
+          object-fit: contain;
+          cursor: pointer;
+        }
+        .enhanced-img-preview:hover {
+          opacity: 0.85;
+        }
       `;
       document.head.appendChild(style);
+    }
+
+    // Check if URL points to an image
+    var imageExtRegex = /\.(png|jpe?g|gif|webp|bmp|svg|ico|avif)(\?[^#]*)?$/i;
+    function isImageUrl(url) {
+      return imageExtRegex.test(url);
     }
 
     // Extract YouTube video ID from various URL formats
@@ -4265,6 +4286,7 @@
       var urlRegex = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/gi;
 
       var youtubeIds = [];
+      var imageUrls = [];
 
       textNodes.forEach(function (node) {
         var text = node.textContent;
@@ -4298,6 +4320,11 @@
             youtubeIds.push(ytId);
           }
 
+          // Check for image
+          if (isImageUrl(href) && imageUrls.indexOf(href) === -1) {
+            imageUrls.push(href);
+          }
+
           lastIdx = match.index + match[0].length;
           // Adjust if we trimmed trailing punctuation
           var trimmed = match[0].length - rawUrl.length;
@@ -4325,6 +4352,20 @@
         iframe.loading = 'lazy';
         wrapper.appendChild(iframe);
         bodyEl.appendChild(wrapper);
+      });
+
+      // Append image previews
+      imageUrls.forEach(function (imgUrl) {
+        var img = document.createElement('img');
+        img.className = 'enhanced-img-preview';
+        img.src = imgUrl;
+        img.alt = 'Image preview';
+        img.loading = 'lazy';
+        img.title = 'Click to open in new tab';
+        img.addEventListener('click', function () {
+          window.open(imgUrl, '_blank', 'noopener,noreferrer');
+        });
+        bodyEl.appendChild(img);
       });
     }
 
