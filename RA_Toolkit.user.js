@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.9.0
+// @version      2.9.1
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,12 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.9.0";
+  var CURRENT_VERSION = "2.9.1";
 
   var CHANGELOG = [
+    { version: "2.9.1", changes: [
+      "Activity Timeline moved above Player Insights stats for better visibility"
+    ]},
     { version: "2.9.0", changes: [
       "User Wall linkify — plain text URLs in comments become clickable links (opens in new tab)",
       "YouTube embed — YouTube links in wall comments show an inline mini video player"
@@ -3148,6 +3151,16 @@
     dashTitle.innerHTML = '📊 Player Insights';
     dashboardDiv.appendChild(dashTitle);
 
+    // Activity Timeline section (above other modules)
+    var timelineSection = document.createElement('div');
+    timelineSection.className = 'enhanced-dashboard-section';
+    timelineSection.innerHTML =
+      '<div class="enhanced-dashboard-section-title">📅 Activity (Last 365 Days)</div>'
+      + '<div class="enhanced-timeline-content">'
+        + '<div class="enhanced-dashboard-skeleton" style="height:32px;"></div>'
+      + '</div>';
+    dashboardDiv.appendChild(timelineSection);
+
     // Stats row (skeleton while loading)
     var statsRow = document.createElement('div');
     statsRow.className = 'enhanced-stats-row';
@@ -3204,16 +3217,6 @@
         + '<div class="enhanced-dashboard-skeleton" style="height:42px;animation-delay:0.2s;"></div>'
       + '</div>';
     dashboardDiv.appendChild(rarestSection);
-
-    // Activity Timeline section
-    var timelineSection = document.createElement('div');
-    timelineSection.className = 'enhanced-dashboard-section';
-    timelineSection.innerHTML =
-      '<div class="enhanced-dashboard-section-title">📅 Activity (Last 365 Days)</div>'
-      + '<div class="enhanced-timeline-content">'
-        + '<div class="enhanced-dashboard-skeleton" style="height:32px;"></div>'
-      + '</div>';
-    dashboardDiv.appendChild(timelineSection);
 
     // --- Render functions ---
     function renderStatsCards(data) {
