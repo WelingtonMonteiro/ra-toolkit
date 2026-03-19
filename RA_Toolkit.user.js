@@ -9,8 +9,8 @@
 // @icon         https://retroachievements.org/assets/images/ra-logo.webp
 // @homepageURL  https://github.com/WelingtonMonteiro/ra-toolkit
 // @supportURL   https://github.com/WelingtonMonteiro/ra-toolkit/issues
-// @updateURL    https://raw.githubusercontent.com/WelingtonMonteiro/ra-toolkit/main/RA_Toolkit.user.js
-// @downloadURL  https://raw.githubusercontent.com/WelingtonMonteiro/ra-toolkit/main/RA_Toolkit.user.js
+// @updateURL    https://update.greasyfork.org/scripts/570282/RA%20Toolkit.user.js
+// @downloadURL  https://update.greasyfork.org/scripts/570282/RA%20Toolkit.user.js
 // @grant        GM_xmlhttpRequest
 // @grant        GM_log
 // @grant        GM_setValue
