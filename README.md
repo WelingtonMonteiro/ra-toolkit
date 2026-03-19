@@ -14,7 +14,7 @@
   <a href="https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js">
     <img src="https://img.shields.io/badge/Install-Tampermonkey-green?logo=tampermonkey" alt="Install">
   </a>
-  <img src="https://img.shields.io/badge/version-2.8.3-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.9.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
 </p>
 
@@ -116,6 +116,10 @@ Injected on user profile pages (`/user/{username}`) with 6 modules:
 - **Light mode support** — auto-detects `data-scheme` (dark/light/black/system) and adapts colors
 - **Mobile layout support** — sidebar injections work on viewports <1024px
 - **Guide link detection** — shows 📖 RA Achievement Guide button when a guide exists for the game
+
+### 🆕 v2.9.0
+- **User Wall linkify** — plain text URLs in comments become clickable links (opens in new tab)
+- **YouTube embed** — YouTube links in wall comments show an inline mini video player
 
 ### 🆕 v2.8.0
 - **1-year Activity Timeline** — GitHub-style contribution heatmap (52 weeks × 7 days) with month labels and day-of-week indicators

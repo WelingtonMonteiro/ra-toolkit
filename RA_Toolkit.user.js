@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.8.3
+// @version      2.9.0
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,13 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.8.3";
+  var CURRENT_VERSION = "2.9.0";
 
   var CHANGELOG = [
+    { version: "2.9.0", changes: [
+      "User Wall linkify — plain text URLs in comments become clickable links (opens in new tab)",
+      "YouTube embed — YouTube links in wall comments show an inline mini video player"
+    ]},
     { version: "2.8.3", changes: [
       "Emuparadise fix — links to download page instead of direct file (avoids referer block)"
     ]},
@@ -368,15 +372,16 @@
                  "enhanced-custom-bg-style", "enhanced-glass-style", "enhanced-dl-style",
                  "enhanced-translate-style", "enhanced-pagination", "enhanced-pagination-style",
                  "enhanced-guide-link", "enhanced-changelog-overlay", "enhanced-rarity-style",
-                 "enhanced-collapse-style"];
+                 "enhanced-collapse-style", "enhanced-wall-linkify-style"];
     ids.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.remove();
     });
-    // Remove injected video iframes, translate buttons, and rarity badges
+    // Remove injected video iframes, translate buttons, rarity badges, and linkify embeds
     document.querySelectorAll("iframe.enhanced-video").forEach(el => el.remove());
     document.querySelectorAll(".enhanced-translate-btn").forEach(el => el.remove());
     document.querySelectorAll(".enhanced-rarity-badge").forEach(el => el.remove());
+    document.querySelectorAll(".enhanced-yt-embed").forEach(el => el.remove());
   }
 
   // =========================================
@@ -4203,6 +4208,190 @@
   }
 
   // =========================================
+  //   User Wall — Linkify URLs + YouTube Embed
+  // =========================================
+  function initWallLinkify() {
+    if (!/^\/user\/[^\/]+(\/(comments)?)?$/i.test(location.pathname)) return;
+
+    // Inject CSS once
+    if (!document.getElementById('enhanced-wall-linkify-style')) {
+      var style = document.createElement('style');
+      style.id = 'enhanced-wall-linkify-style';
+      style.textContent = `
+        .enhanced-wall-link {
+          color: var(--ra-accent, #3b82f6);
+          text-decoration: underline;
+          word-break: break-all;
+        }
+        .enhanced-wall-link:hover {
+          opacity: 0.8;
+        }
+        .enhanced-yt-embed {
+          display: block;
+          margin-top: 6px;
+          border-radius: 6px;
+          overflow: hidden;
+          max-width: 360px;
+          aspect-ratio: 16/9;
+        }
+        .enhanced-yt-embed iframe {
+          width: 100%;
+          height: 100%;
+          border: 0;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Extract YouTube video ID from various URL formats
+    function extractYouTubeId(url) {
+      var m = url.match(/(?:youtube\.com\/watch\?.*v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
+      return m ? m[1] : null;
+    }
+
+    function linkifyCommentBody(bodyEl) {
+      if (bodyEl.getAttribute('data-enhanced-linkified')) return;
+      bodyEl.setAttribute('data-enhanced-linkified', '1');
+
+      // Process text nodes only (preserve existing HTML structure)
+      var walker = document.createTreeWalker(bodyEl, NodeFilter.SHOW_TEXT, null, false);
+      var textNodes = [];
+      while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+      // URL regex — match http(s) and www. URLs
+      var urlRegex = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/gi;
+
+      var youtubeIds = [];
+
+      textNodes.forEach(function (node) {
+        var text = node.textContent;
+        if (!urlRegex.test(text)) return;
+        urlRegex.lastIndex = 0;
+
+        var frag = document.createDocumentFragment();
+        var lastIdx = 0;
+        var match;
+
+        while ((match = urlRegex.exec(text)) !== null) {
+          // Add text before the match
+          if (match.index > lastIdx) {
+            frag.appendChild(document.createTextNode(text.slice(lastIdx, match.index)));
+          }
+
+          var rawUrl = match[0].replace(/[.,;:!?)]+$/, ''); // trim trailing punctuation
+          var href = rawUrl.startsWith('http') ? rawUrl : 'https://' + rawUrl;
+
+          var a = document.createElement('a');
+          a.href = href;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          a.className = 'enhanced-wall-link';
+          a.textContent = rawUrl;
+          frag.appendChild(a);
+
+          // Check for YouTube
+          var ytId = extractYouTubeId(href);
+          if (ytId && youtubeIds.indexOf(ytId) === -1) {
+            youtubeIds.push(ytId);
+          }
+
+          lastIdx = match.index + match[0].length;
+          // Adjust if we trimmed trailing punctuation
+          var trimmed = match[0].length - rawUrl.length;
+          if (trimmed > 0) {
+            frag.appendChild(document.createTextNode(match[0].slice(match[0].length - trimmed)));
+          }
+        }
+
+        // Remaining text after last match
+        if (lastIdx < text.length) {
+          frag.appendChild(document.createTextNode(text.slice(lastIdx)));
+        }
+
+        node.parentNode.replaceChild(frag, node);
+      });
+
+      // Append YouTube embeds after the comment body
+      youtubeIds.forEach(function (ytId) {
+        var wrapper = document.createElement('div');
+        wrapper.className = 'enhanced-yt-embed';
+        var iframe = document.createElement('iframe');
+        iframe.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(ytId);
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        iframe.allowFullscreen = true;
+        iframe.loading = 'lazy';
+        wrapper.appendChild(iframe);
+        bodyEl.appendChild(wrapper);
+      });
+    }
+
+    function processAllComments() {
+      var commentItems = document.querySelectorAll(
+        'tr.comment.group, .commentscomponent tr.comment, ul.highlighted-list > li'
+      );
+
+      commentItems.forEach(function (el) {
+        var bodyEl = null;
+
+        // Strategy 1: element with word-break style
+        var candidates = el.querySelectorAll('[style*="word-break"]');
+        for (var i = 0; i < candidates.length; i++) {
+          if (candidates[i].textContent.trim()) {
+            bodyEl = candidates[i];
+            break;
+          }
+        }
+
+        // Strategy 2: legacy Blade — td with colspan
+        if (!bodyEl) {
+          var td = el.querySelector('td[colspan]') || el.querySelector('td.w-full');
+          if (td) {
+            var divs = td.querySelectorAll(':scope > div');
+            for (var j = divs.length - 1; j >= 0; j--) {
+              var txt = divs[j].textContent.trim();
+              if (txt && !divs[j].querySelector('.smalldate') && txt.length > 2) {
+                bodyEl = divs[j];
+                break;
+              }
+            }
+          }
+        }
+
+        // Strategy 3: React — p inside div.w-full
+        if (!bodyEl) {
+          var contentDiv = el.querySelector('div.w-full');
+          if (contentDiv) {
+            var ps = contentDiv.querySelectorAll(':scope > p');
+            for (var k = ps.length - 1; k >= 0; k--) {
+              var t = ps[k].textContent.trim();
+              if (t && !ps[k].querySelector('.smalldate') && t.length > 2) {
+                bodyEl = ps[k];
+                break;
+              }
+            }
+          }
+        }
+
+        if (!bodyEl) return;
+        linkifyCommentBody(bodyEl);
+      });
+    }
+
+    setTimeout(processAllComments, 800);
+
+    var linkifyObserver = new MutationObserver(function () {
+      processAllComments();
+    });
+    var container = document.querySelector('.commentscomponent')
+      || document.querySelector('ul.highlighted-list')
+      || document.querySelector('main')
+      || document.body;
+    linkifyObserver.observe(container, { childList: true, subtree: true });
+
+    log.info('Wall linkify initialized');
+  }
+
+  // =========================================
   //   User Wall Comment Translation
   // =========================================
   async function initWallTranslation() {
@@ -4438,6 +4627,7 @@
     _lastInitUrl = url;
     init();
     initUserPagination();
+    initWallLinkify();
     initWallTranslation();
   }
 
