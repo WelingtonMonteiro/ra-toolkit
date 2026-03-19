@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.5.4
+// @version      2.5.5
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,13 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.5.4";
+  var CURRENT_VERSION = "2.5.5";
 
   var CHANGELOG = [
+    { version: "2.5.5", changes: [
+      "Activity Timeline: rich custom tooltip with date header and per-mode icon breakdown",
+      "Activity Timeline: tooltip shows \ud83c\udfc6 \ud83d\udc51 \u2705 icons next to each line"
+    ]},
     { version: "2.5.4", changes: [
       "Activity Timeline: multi-select toggle buttons — select multiple modes (Achievements + Mastered + Beaten) to see combined heatmap",
       "Activity Timeline: combined mode uses emerald green color scheme",
@@ -3123,6 +3127,35 @@
         .enhanced-timeline-cell.combined-2 { background: rgba(16,185,129,0.5); }
         .enhanced-timeline-cell.combined-3 { background: rgba(16,185,129,0.75); }
         .enhanced-timeline-cell.combined-4 { background: #10b981; }
+        .enhanced-timeline-tooltip {
+          position: fixed;
+          z-index: 99999;
+          pointer-events: none;
+          background: #1a1a2e;
+          border: 1px solid rgba(255,255,255,0.15);
+          border-radius: 6px;
+          padding: 6px 10px;
+          font-size: 0.7rem;
+          color: #e5e5e5;
+          line-height: 1.6;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+          white-space: nowrap;
+          opacity: 0;
+          transition: opacity 0.12s;
+        }
+        .enhanced-timeline-tooltip.visible { opacity: 1; }
+        .enhanced-timeline-tooltip .tooltip-date {
+          font-weight: 700;
+          margin-bottom: 2px;
+          color: #fff;
+        }
+        .enhanced-timeline-tooltip .tooltip-line {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        .enhanced-timeline-tooltip .tooltip-line .tooltip-icon { font-size: 0.75rem; }
+        .enhanced-timeline-tooltip .tooltip-no-activity { color: #737373; font-style: italic; }
         .enhanced-timeline-footer {
           display: flex;
           justify-content: space-between;
@@ -3589,6 +3622,7 @@
         achievements: {
           dayMap: achDayMap,
           prefix: 'level',
+          icon: '🏆',
           label: '🏆 Achievements',
           totalLabel: function (dm) { var t = 0; for (var k in dm) t += dm[k]; return t + ' achievements'; },
           tooltipSingular: 'achievement',
@@ -3600,6 +3634,7 @@
         mastered: {
           dayMap: masteredDayMap || {},
           prefix: 'mastered',
+          icon: '👑',
           label: '👑 Mastered',
           totalLabel: function (dm) { var t = 0; for (var k in dm) t += dm[k]; return t + ' games mastered'; },
           tooltipSingular: 'game mastered',
@@ -3611,6 +3646,7 @@
         beaten: {
           dayMap: beatenDayMap || {},
           prefix: 'beaten',
+          icon: '✅',
           label: '✅ Beaten',
           totalLabel: function (dm) { var t = 0; for (var k in dm) t += dm[k]; return t + ' games beaten'; },
           tooltipSingular: 'game beaten',
@@ -3705,19 +3741,18 @@
             var cell = cellMap[wi] && cellMap[wi][dow];
             if (cell) {
               var level = getLevel(cell.count);
-              // Build tooltip with per-mode breakdown
-              var tooltipParts = [];
+              // Build tooltip data attributes
+              var tooltipLines = [];
               activeKeys.forEach(function (key) {
                 var c = modes[key].dayMap[cell.date] || 0;
                 if (c > 0) {
                   var unit = c === 1 ? modes[key].tooltipSingular : modes[key].tooltipPlural;
-                  tooltipParts.push(c + ' ' + unit);
+                  tooltipLines.push(modes[key].icon + '|' + c + ' ' + unit);
                 }
               });
               var dateStr = monthNames[cell.day.getMonth()] + ' ' + cell.day.getDate() + ', ' + cell.day.getFullYear();
-              var label = tooltipParts.length > 0 ? dateStr + ': ' + tooltipParts.join(', ') : dateStr + ': No activity';
               var cls = level === 0 ? 'level-0' : (levelPrefix + '-' + level);
-              html += '<div class="enhanced-timeline-cell ' + cls + '" title="' + escapeHtml(label) + '"></div>';
+              html += '<div class="enhanced-timeline-cell ' + cls + '" data-tip-date="' + escapeHtml(dateStr) + '" data-tip-lines="' + escapeHtml(tooltipLines.join(';;')) + '"></div>';
             } else {
               html += '<div></div>';
             }
@@ -3799,6 +3834,49 @@
           activeModes[mode] = !activeModes[mode];
           renderModes();
         });
+      });
+
+      // Custom tooltip
+      var tooltip = document.createElement('div');
+      tooltip.className = 'enhanced-timeline-tooltip';
+      document.body.appendChild(tooltip);
+
+      content.addEventListener('mouseover', function (e) {
+        var cell = e.target.closest('.enhanced-timeline-cell');
+        if (!cell || !cell.dataset.tipDate) return;
+        var dateStr = cell.dataset.tipDate;
+        var linesRaw = cell.dataset.tipLines;
+        var html = '<div class="tooltip-date">' + escapeHtml(dateStr) + '</div>';
+        if (linesRaw) {
+          var lines = linesRaw.split(';;');
+          lines.forEach(function (line) {
+            if (!line) return;
+            var parts = line.split('|');
+            var icon = parts[0] || '';
+            var text = parts[1] || '';
+            html += '<div class="tooltip-line"><span class="tooltip-icon">' + icon + '</span> ' + escapeHtml(text) + '</div>';
+          });
+        } else {
+          html += '<div class="tooltip-no-activity">No activity</div>';
+        }
+        tooltip.innerHTML = html;
+        tooltip.classList.add('visible');
+      });
+
+      content.addEventListener('mousemove', function (e) {
+        if (!tooltip.classList.contains('visible')) return;
+        var x = e.clientX + 12;
+        var y = e.clientY - tooltip.offsetHeight - 8;
+        if (y < 4) y = e.clientY + 16;
+        if (x + tooltip.offsetWidth > window.innerWidth - 4) x = e.clientX - tooltip.offsetWidth - 12;
+        tooltip.style.left = x + 'px';
+        tooltip.style.top = y + 'px';
+      });
+
+      content.addEventListener('mouseout', function (e) {
+        var cell = e.target.closest('.enhanced-timeline-cell');
+        if (!cell) return;
+        tooltip.classList.remove('visible');
       });
     }
 
