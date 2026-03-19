@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.9.4
+// @version      2.10.0
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,14 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.9.4";
+  var CURRENT_VERSION = "2.10.0";
 
   var CHANGELOG = [
+    { version: "2.10.0", changes: [
+      "Activity Timeline: total achievements count shown in title",
+      "Activity Timeline: toggle buttons to switch between Achievements (blue), Mastered (gold), and Beaten (gray) heatmaps",
+      "New API integration: GetUserAwards for mastered/beaten game dates"
+    ]},
     { version: "2.9.4", changes: [
       "Fix: rarity indicators on game page now work with all languages (i18n-safe percentage parsing)"
     ]},
@@ -3072,6 +3077,16 @@
         .enhanced-timeline-cell.level-2 { background: rgba(59,130,246,0.5); }
         .enhanced-timeline-cell.level-3 { background: rgba(59,130,246,0.75); }
         .enhanced-timeline-cell.level-4 { background: #3b82f6; }
+        /* Mastered mode (gold) */
+        .enhanced-timeline-cell.mastered-1 { background: rgba(251,191,36,0.25); }
+        .enhanced-timeline-cell.mastered-2 { background: rgba(251,191,36,0.5); }
+        .enhanced-timeline-cell.mastered-3 { background: rgba(251,191,36,0.75); }
+        .enhanced-timeline-cell.mastered-4 { background: #fbbf24; }
+        /* Beaten mode (gray) */
+        .enhanced-timeline-cell.beaten-1 { background: rgba(163,163,163,0.25); }
+        .enhanced-timeline-cell.beaten-2 { background: rgba(163,163,163,0.5); }
+        .enhanced-timeline-cell.beaten-3 { background: rgba(163,163,163,0.75); }
+        .enhanced-timeline-cell.beaten-4 { background: #a3a3a3; }
         .enhanced-timeline-footer {
           display: flex;
           justify-content: space-between;
@@ -3091,6 +3106,36 @@
           width: 10px;
           height: 10px;
           border-radius: 2px;
+        }
+        .enhanced-timeline-toggle-bar {
+          display: flex;
+          gap: 4px;
+          margin-bottom: 6px;
+        }
+        .enhanced-timeline-toggle-btn {
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 0.65rem;
+          font-weight: 600;
+          cursor: pointer;
+          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.04);
+          color: #a3a3a3;
+          transition: all 0.15s;
+        }
+        .enhanced-timeline-toggle-btn:hover {
+          background: rgba(255,255,255,0.08);
+        }
+        .enhanced-timeline-toggle-btn.active {
+          border-color: var(--toggle-color, #3b82f6);
+          color: var(--toggle-color, #3b82f6);
+          background: var(--toggle-bg, rgba(59,130,246,0.12));
+        }
+        .enhanced-timeline-total {
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: #a3a3a3;
+          margin-left: 8px;
         }
       `;
       document.head.appendChild(style);
@@ -3182,7 +3227,7 @@
     var timelineSection = document.createElement('div');
     timelineSection.className = 'enhanced-dashboard-section';
     timelineSection.innerHTML =
-      '<div class="enhanced-dashboard-section-title">📅 Activity (Last 365 Days)</div>'
+      '<div class="enhanced-dashboard-section-title">📅 Activity (Last 365 Days)<span class="enhanced-timeline-total" id="enhanced-timeline-total"></span></div>'
       + '<div class="enhanced-timeline-content">'
         + '<div class="enhanced-dashboard-skeleton" style="height:32px;"></div>'
       + '</div>';
@@ -3453,138 +3498,215 @@
       });
     }
 
-    function renderActivityTimeline(achievements) {
+    function renderActivityTimeline(achievements, masteredDayMap, beatenDayMap) {
       var content = timelineSection.querySelector('.enhanced-timeline-content');
       if (!achievements || achievements.length === 0) {
         content.innerHTML = '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">No recent activity.</div>';
         return;
       }
 
-      // Group by day
-      var dayMap = {};
+      // Update total in title
+      var totalEl = document.getElementById('enhanced-timeline-total');
+      if (totalEl) totalEl.textContent = '— ' + achievements.length + ' achievements';
+
+      // Group achievements by day
+      var achDayMap = {};
       achievements.forEach(function (a) {
         if (!a.Date) return;
         var day = a.Date.substring(0, 10);
-        dayMap[day] = (dayMap[day] || 0) + 1;
+        achDayMap[day] = (achDayMap[day] || 0) + 1;
       });
 
-      // Build 365-day calendar: weeks (columns) × days-of-week (rows)
+      // Build 365-day calendar grid structure (shared across modes)
       var today = new Date();
       today.setHours(0, 0, 0, 0);
-      var todayDow = today.getDay(); // 0=Sun...6=Sat
-
-      // Start from the Sunday of the week 52 weeks ago
+      var todayDow = today.getDay();
       var startDate = new Date(today);
       startDate.setDate(startDate.getDate() - 364 - todayDow);
-
-      // Build matrix: 7 rows (Sun=0 to Sat=6) × up to 53 columns
       var totalDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
       var numWeeks = Math.ceil(totalDays / 7);
-      var cells = []; // [{date, count, day, week, dow}]
-      var maxCount = 0;
 
+      var baseCells = [];
       for (var w = 0; w < numWeeks; w++) {
         for (var dow = 0; dow < 7; dow++) {
           var d = new Date(startDate);
           d.setDate(d.getDate() + w * 7 + dow);
           if (d > today) continue;
-          var dStr = d.toISOString().substring(0, 10);
-          var count = dayMap[dStr] || 0;
-          if (count > maxCount) maxCount = count;
-          cells.push({ date: dStr, count: count, day: d, week: w, dow: dow });
+          baseCells.push({ date: d.toISOString().substring(0, 10), day: d, week: w, dow: dow });
         }
-      }
-
-      function getLevel(count) {
-        if (count === 0) return 0;
-        if (maxCount <= 4) return count;
-        var pct = count / maxCount;
-        if (pct <= 0.25) return 1;
-        if (pct <= 0.5) return 2;
-        if (pct <= 0.75) return 3;
-        return 4;
       }
 
       var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       var dayLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-      // Determine month label positions (column index where each month starts)
+      // Month label positions
       var monthCols = {};
-      cells.forEach(function (c) {
-        if (c.dow === 0) { // first day of each week-column
-          var m = c.day.getMonth();
-          var key = c.day.getFullYear() + '-' + m;
-          if (!(key in monthCols)) {
-            monthCols[key] = { week: c.week, month: m };
-          }
+      baseCells.forEach(function (c) {
+        if (c.dow === 0) {
+          var key = c.day.getFullYear() + '-' + c.day.getMonth();
+          if (!(key in monthCols)) monthCols[key] = { week: c.week, month: c.day.getMonth() };
         }
       });
 
-      // Build HTML grid: row 0 = month labels, rows 1-7 = days
-      var html = '<div class="enhanced-timeline-wrapper">';
-      var cellSize = Math.max(8, Math.floor((content.offsetWidth - 32) / (numWeeks + 1)));
-      if (cellSize > 14) cellSize = 14;
-      html += '<div class="enhanced-timeline-table" style="grid-template-columns:28px repeat(' + numWeeks + ',' + cellSize + 'px);grid-template-rows:auto repeat(7,' + cellSize + 'px);">';
-
-      // Month label row — first cell is empty (day-label column)
-      html += '<div></div>';
-      var monthLabelsArr = [];
-      for (var wi = 0; wi < numWeeks; wi++) {
-        monthLabelsArr.push('');
-      }
-      Object.keys(monthCols).forEach(function (key) {
-        var info = monthCols[key];
-        monthLabelsArr[info.week] = monthNames[info.month];
-      });
-      for (var wi = 0; wi < numWeeks; wi++) {
-        html += '<div class="enhanced-timeline-month-label">' + monthLabelsArr[wi] + '</div>';
-      }
-
-      // Day rows (0=Sun through 6=Sat)
-      // Build lookup: cellMap[week][dow]
-      var cellMap = {};
-      cells.forEach(function (c) {
-        if (!cellMap[c.week]) cellMap[c.week] = {};
-        cellMap[c.week][c.dow] = c;
-      });
-
-      for (var dow = 0; dow < 7; dow++) {
-        // Day label on the left — only show Mon (1), Wed (3), Fri (5) to reduce clutter
-        if (dow === 1 || dow === 3 || dow === 5) {
-          html += '<div class="enhanced-timeline-day-label">' + dayLabels[dow] + '</div>';
-        } else {
-          html += '<div class="enhanced-timeline-day-label"></div>';
+      // Three data modes
+      var modes = {
+        achievements: {
+          dayMap: achDayMap,
+          prefix: 'level',
+          label: '🏆 Achievements',
+          totalLabel: function (dm) { var t = 0; for (var k in dm) t += dm[k]; return t + ' achievements'; },
+          tooltipSingular: 'achievement',
+          tooltipPlural: 'achievements',
+          color: '#3b82f6',
+          bg: 'rgba(59,130,246,0.12)',
+          legendColors: ['rgba(255,255,255,0.04)','rgba(59,130,246,0.25)','rgba(59,130,246,0.5)','rgba(59,130,246,0.75)','#3b82f6']
+        },
+        mastered: {
+          dayMap: masteredDayMap || {},
+          prefix: 'mastered',
+          label: '👑 Mastered',
+          totalLabel: function (dm) { var t = 0; for (var k in dm) t += dm[k]; return t + ' games mastered'; },
+          tooltipSingular: 'game mastered',
+          tooltipPlural: 'games mastered',
+          color: '#fbbf24',
+          bg: 'rgba(251,191,36,0.12)',
+          legendColors: ['rgba(255,255,255,0.04)','rgba(251,191,36,0.25)','rgba(251,191,36,0.5)','rgba(251,191,36,0.75)','#fbbf24']
+        },
+        beaten: {
+          dayMap: beatenDayMap || {},
+          prefix: 'beaten',
+          label: '✅ Beaten',
+          totalLabel: function (dm) { var t = 0; for (var k in dm) t += dm[k]; return t + ' games beaten'; },
+          tooltipSingular: 'game beaten',
+          tooltipPlural: 'games beaten',
+          color: '#a3a3a3',
+          bg: 'rgba(163,163,163,0.12)',
+          legendColors: ['rgba(255,255,255,0.04)','rgba(163,163,163,0.25)','rgba(163,163,163,0.5)','rgba(163,163,163,0.75)','#a3a3a3']
         }
+      };
+
+      var currentMode = 'achievements';
+
+      function buildGrid(mode) {
+        var dm = mode.dayMap;
+        var maxCount = 0;
+        var cellData = baseCells.map(function (c) {
+          var count = dm[c.date] || 0;
+          if (count > maxCount) maxCount = count;
+          return { date: c.date, count: count, day: c.day, week: c.week, dow: c.dow };
+        });
+
+        function getLevel(count) {
+          if (count === 0) return 0;
+          if (maxCount <= 4) return Math.min(count, 4);
+          var pct = count / maxCount;
+          if (pct <= 0.25) return 1;
+          if (pct <= 0.5) return 2;
+          if (pct <= 0.75) return 3;
+          return 4;
+        }
+
+        var cellSize = Math.max(8, Math.floor((content.offsetWidth - 32) / (numWeeks + 1)));
+        if (cellSize > 14) cellSize = 14;
+
+        var html = '<div class="enhanced-timeline-wrapper">';
+        html += '<div class="enhanced-timeline-table" style="grid-template-columns:28px repeat(' + numWeeks + ',' + cellSize + 'px);grid-template-rows:auto repeat(7,' + cellSize + 'px);">';
+
+        // Month labels row
+        html += '<div></div>';
+        var monthLabelsArr = [];
+        for (var wi = 0; wi < numWeeks; wi++) monthLabelsArr.push('');
+        Object.keys(monthCols).forEach(function (key) {
+          var info = monthCols[key];
+          monthLabelsArr[info.week] = monthNames[info.month];
+        });
         for (var wi = 0; wi < numWeeks; wi++) {
-          var cell = cellMap[wi] && cellMap[wi][dow];
-          if (cell) {
-            var level = getLevel(cell.count);
-            var label = monthNames[cell.day.getMonth()] + ' ' + cell.day.getDate() + ': ' + cell.count + ' achievement' + (cell.count !== 1 ? 's' : '');
-            html += '<div class="enhanced-timeline-cell level-' + level + '" title="' + escapeHtml(label) + '"></div>';
+          html += '<div class="enhanced-timeline-month-label">' + monthLabelsArr[wi] + '</div>';
+        }
+
+        // Cell lookup
+        var cellMap = {};
+        cellData.forEach(function (c) {
+          if (!cellMap[c.week]) cellMap[c.week] = {};
+          cellMap[c.week][c.dow] = c;
+        });
+
+        var levelPrefix = mode.prefix === 'level' ? 'level' : mode.prefix;
+
+        for (var dow = 0; dow < 7; dow++) {
+          if (dow === 1 || dow === 3 || dow === 5) {
+            html += '<div class="enhanced-timeline-day-label">' + dayLabels[dow] + '</div>';
           } else {
-            html += '<div></div>';
+            html += '<div class="enhanced-timeline-day-label"></div>';
+          }
+          for (var wi = 0; wi < numWeeks; wi++) {
+            var cell = cellMap[wi] && cellMap[wi][dow];
+            if (cell) {
+              var level = getLevel(cell.count);
+              var unit = cell.count === 1 ? mode.tooltipSingular : mode.tooltipPlural;
+              var label = monthNames[cell.day.getMonth()] + ' ' + cell.day.getDate() + ': ' + cell.count + ' ' + unit;
+              var cls = level === 0 ? 'level-0' : (levelPrefix + '-' + level);
+              html += '<div class="enhanced-timeline-cell ' + cls + '" title="' + escapeHtml(label) + '"></div>';
+            } else {
+              html += '<div></div>';
+            }
           }
         }
+
+        html += '</div></div>';
+
+        // Footer
+        var activeDays = 0;
+        for (var k in dm) { if (dm[k] > 0) activeDays++; }
+        html += '<div class="enhanced-timeline-footer">';
+        html += '<span>' + mode.totalLabel(dm) + ' in ' + activeDays + ' days</span>';
+        html += '<div class="enhanced-timeline-legend">';
+        html += '<span>Less</span>';
+        for (var li = 0; li < mode.legendColors.length; li++) {
+          html += '<div class="enhanced-timeline-legend-cell" style="background:' + mode.legendColors[li] + ';"></div>';
+        }
+        html += '<span>More</span>';
+        html += '</div></div>';
+
+        return html;
       }
 
-      html += '</div></div>';
+      function renderMode(modeKey) {
+        currentMode = modeKey;
+        var gridContainer = content.querySelector('.enhanced-timeline-grid-area');
+        if (gridContainer) gridContainer.innerHTML = buildGrid(modes[modeKey]);
+        // Update toggle button active states
+        var btns = content.querySelectorAll('.enhanced-timeline-toggle-btn');
+        btns.forEach(function (btn) {
+          var bm = btn.getAttribute('data-mode');
+          if (bm === modeKey) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+      }
 
-      // Footer: total achievements + legend
-      var totalAch = achievements.length;
-      var activeDays = Object.keys(dayMap).length;
-      html += '<div class="enhanced-timeline-footer">';
-      html += '<span>' + totalAch + ' achievements in ' + activeDays + ' days</span>';
-      html += '<div class="enhanced-timeline-legend">';
-      html += '<span>Less</span>';
-      html += '<div class="enhanced-timeline-legend-cell level-0" style="background:rgba(255,255,255,0.04);"></div>';
-      html += '<div class="enhanced-timeline-legend-cell level-1" style="background:rgba(59,130,246,0.25);"></div>';
-      html += '<div class="enhanced-timeline-legend-cell level-2" style="background:rgba(59,130,246,0.5);"></div>';
-      html += '<div class="enhanced-timeline-legend-cell level-3" style="background:rgba(59,130,246,0.75);"></div>';
-      html += '<div class="enhanced-timeline-legend-cell level-4" style="background:#3b82f6;"></div>';
-      html += '<span>More</span>';
-      html += '</div></div>';
+      // Build toggle bar + grid container
+      var outerHtml = '<div class="enhanced-timeline-toggle-bar">';
+      ['achievements', 'mastered', 'beaten'].forEach(function (key) {
+        var m = modes[key];
+        var activeClass = key === 'achievements' ? ' active' : '';
+        outerHtml += '<button class="enhanced-timeline-toggle-btn' + activeClass + '" data-mode="' + key + '" '
+          + 'style="--toggle-color:' + m.color + ';--toggle-bg:' + m.bg + ';">'
+          + m.label + '</button>';
+      });
+      outerHtml += '</div>';
+      outerHtml += '<div class="enhanced-timeline-grid-area">' + buildGrid(modes.achievements) + '</div>';
 
-      content.innerHTML = html;
+      content.innerHTML = outerHtml;
+
+      // Bind toggle clicks
+      content.querySelectorAll('.enhanced-timeline-toggle-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          renderMode(btn.getAttribute('data-mode'));
+        });
+      });
     }
 
     // --- Fetch dashboard data ---
@@ -3702,6 +3824,10 @@
         + '&y=' + encodeURIComponent(apiKey)
         + '&m=43200'; // 30 days in minutes
 
+      var awardsUrl = 'https://retroachievements.org/API/API_GetUserAwards.php'
+        + '?u=' + encodeURIComponent(targetUser)
+        + '&y=' + encodeURIComponent(apiKey);
+
       // Build quarterly URLs for 1-year timeline (4 chunks of ~91 days)
       var now = Math.floor(Date.now() / 1000);
       var oneYearAgo = now - 365 * 24 * 60 * 60;
@@ -3718,11 +3844,12 @@
         );
       }
 
-      // Fetch summary + recent games + recent achievements (30d) + yearly chunks in parallel
+      // Fetch summary + recent games + recent achievements (30d) + awards + yearly chunks in parallel
       var corePromises = [
         gmFetch(summaryUrl, 15000).then(function (r) { return JSON.parse(r.responseText); }).catch(function () { return null; }),
         gmFetch(recentAllUrl, 15000).then(function (r) { return JSON.parse(r.responseText); }).catch(function () { return null; }),
-        gmFetch(recentAchUrl, 15000).then(function (r) { return JSON.parse(r.responseText); }).catch(function () { return null; })
+        gmFetch(recentAchUrl, 15000).then(function (r) { return JSON.parse(r.responseText); }).catch(function () { return null; }),
+        gmFetch(awardsUrl, 15000).then(function (r) { return JSON.parse(r.responseText); }).catch(function () { return null; })
       ];
       var yearlyPromises = yearlyChunkUrls.map(function (url) {
         return gmFetch(url, 20000).then(function (r) { return JSON.parse(r.responseText); }).catch(function () { return []; });
@@ -3732,11 +3859,12 @@
         var summary = results[0];
         var recentGames = results[1];
         var recentAchievements = results[2]; // 30-day data for rarest
+        var awardsData = results[3]; // user awards (mastered/beaten dates)
 
         // Merge 4 quarterly chunks into yearlyAchievements
         var yearlyAchievements = [];
         for (var q = 0; q < 4; q++) {
-          var chunk = results[3 + q];
+          var chunk = results[4 + q];
           if (Array.isArray(chunk)) {
             yearlyAchievements = yearlyAchievements.concat(chunk);
           }
@@ -3807,9 +3935,33 @@
             '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load rarity data.</div>';
         }
 
-        // --- Activity Timeline (yearly data) ---
+        // --- Activity Timeline (yearly data + awards) ---
+        // Process awards for mastered/beaten heatmap modes
+        var masteredDayMap = {};
+        var beatenDayMap = {};
+        var oneYearAgoDate = new Date();
+        oneYearAgoDate.setDate(oneYearAgoDate.getDate() - 365);
+        oneYearAgoDate.setHours(0, 0, 0, 0);
+
+        if (awardsData && Array.isArray(awardsData.VisibleUserAwards)) {
+          awardsData.VisibleUserAwards.forEach(function (award) {
+            if (!award.AwardedAt) return;
+            var awardDate = new Date(award.AwardedAt);
+            if (awardDate < oneYearAgoDate) return;
+            var dayStr = awardDate.toISOString().substring(0, 10);
+
+            // AwardType + AwardDataExtra: "Game Beaten" = beaten, "Mastery/Completion" with Extra=1 = mastered, Extra=0 = completed (softcore mastery)
+            var aType = (award.AwardType || '').toLowerCase();
+            if (aType === 'mastery/completion' || aType === 'mastery') {
+              masteredDayMap[dayStr] = (masteredDayMap[dayStr] || 0) + 1;
+            } else if (aType === 'game beaten') {
+              beatenDayMap[dayStr] = (beatenDayMap[dayStr] || 0) + 1;
+            }
+          });
+        }
+
         if (yearlyAchievements && yearlyAchievements.length > 0) {
-          renderActivityTimeline(yearlyAchievements);
+          renderActivityTimeline(yearlyAchievements, masteredDayMap, beatenDayMap);
         } else {
           timelineSection.querySelector('.enhanced-timeline-content').innerHTML =
             '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load activity data.</div>';
