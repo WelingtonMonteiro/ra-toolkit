@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.9.2
+// @version      2.9.3
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,12 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.9.2";
+  var CURRENT_VERSION = "2.9.3";
 
   var CHANGELOG = [
+    { version: "2.9.3", changes: [
+      "Fix: enableRarityIndicator variable scope — rarity indicators now work correctly in achievement badges pagination"
+    ]},
     { version: "2.9.2", changes: [
       "Image preview in wall comments — image links (png, jpg, gif, webp, etc.) show inline preview, click to open"
     ]},
@@ -2647,6 +2650,7 @@
 
     var targetUser = decodeURIComponent(userMatch[1]);
     var apiKey = await GM_getValue("raApiKey", "");
+    var enableRarityIndicator = await GM_getValue("enableRarityIndicator", true);
     if (!apiKey) {
       log.debug("User pagination: no API key configured, skipping");
       return;
