@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.10.0
+// @version      2.10.1
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,13 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.10.0";
+  var CURRENT_VERSION = "2.10.1";
 
   var CHANGELOG = [
+    { version: "2.10.1", changes: [
+      "Translate: disable button for texts exceeding 500-char API query limit",
+      "Translate: show 'Too long' label with character count tooltip on hover"
+    ]},
     { version: "2.10.0", changes: [
       "Activity Timeline: total achievements count shown in title",
       "Activity Timeline: toggle buttons to switch between Achievements (blue), Mastered (gold), and Beaten (gray) heatmaps",
@@ -1462,6 +1466,11 @@
             color: #3b82f6;
             border-color: rgba(59,130,246,0.3);
           }
+          .enhanced-translate-btn.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+          }
         `;
         document.head.appendChild(style);
       }
@@ -1491,12 +1500,23 @@
 
         var btn = document.createElement("button");
         btn.className = "enhanced-translate-btn";
+
+        var originalDesc = descP.textContent;
+        var originalTitle = titleLink ? titleLink.textContent : "";
+        var textToCheck = (originalTitle ? originalTitle + "\n" : "") + originalDesc;
+
+        if (textToCheck.length > 500) {
+          btn.classList.add("disabled");
+          btn.title = "Text exceeds 500 character limit for translation (" + textToCheck.length + " chars)";
+          btn.innerHTML = '&#x1F310; Too long';
+          descP.appendChild(btn);
+          return;
+        }
+
         btn.title = "Translate to " + translateLang;
         btn.innerHTML = '&#x1F310; Translate';
 
         var isTranslated = false;
-        var originalDesc = descP.textContent;
-        var originalTitle = titleLink ? titleLink.textContent : "";
         var translatedDesc = null;
         var translatedTitle = null;
 
@@ -4657,6 +4677,11 @@
           color: #3b82f6;
           border-color: rgba(59,130,246,0.3);
         }
+        .enhanced-wall-translate-btn.disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+          pointer-events: none;
+        }
       `;
       document.head.appendChild(style);
     }
@@ -4719,6 +4744,16 @@
 
         var btn = document.createElement('button');
         btn.className = 'enhanced-wall-translate-btn';
+
+        var commentText = bodyEl.textContent.trim();
+        if (commentText.length > 500) {
+          btn.classList.add('disabled');
+          btn.title = 'Text exceeds 500 character limit for translation (' + commentText.length + ' chars)';
+          btn.innerHTML = '&#x1F310; Too long';
+          bodyEl.after(btn);
+          return;
+        }
+
         btn.title = 'Translate to ' + wallLang;
         btn.innerHTML = '&#x1F310; Translate';
 
