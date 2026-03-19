@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.5.2
+// @version      2.5.3
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,12 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.5.2";
+  var CURRENT_VERSION = "2.5.3";
 
   var CHANGELOG = [
+    { version: "2.5.3", changes: [
+      "Updated install/update URLs for Greasy Fork"
+    ]},
     { version: "2.5.2", changes: [
       "Activity Timeline: tooltip now shows year (e.g. 'Mar 19, 2026: 5 achievements')"
     ]},
