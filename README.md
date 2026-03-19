@@ -43,7 +43,7 @@ Tampermonkey is a browser extension that lets you run userscripts on any website
 
 **Option A — One click (recommended):**
 
-👉 **[Click here to install RA Toolkit](https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js)**
+👉 **[Click here to install RA Toolkit](https://update.greasyfork.org/scripts/570282/RA%20Toolkit.user.js)**
 
 Tampermonkey will detect the `.user.js` file automatically and show an install screen. Click **Install**.
 
@@ -51,7 +51,7 @@ Tampermonkey will detect the `.user.js` file automatically and show an install s
 
 1. Copy the script URL:
    ```
-   https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js
+   https://update.greasyfork.org/scripts/570282/RA%20Toolkit.user.js
    ```
 2. Click the Tampermonkey icon in your toolbar → **Create a new script**
 3. Delete the default template content
