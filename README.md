@@ -14,7 +14,7 @@
   <a href="https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js">
     <img src="https://img.shields.io/badge/Install-Tampermonkey-green?logo=tampermonkey" alt="Install">
   </a>
-  <img src="https://img.shields.io/badge/version-2.6.1-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.6.2-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
 </p>
 
@@ -135,6 +135,10 @@ Injected on user profile pages (`/user/{username}`) with 6 modules:
 ---
 
 ## 📋 Changelog
+
+### v2.6.2
+- Activity Timeline: multi-select now uses priority coloring per cell (Mastered gold > Beaten gray > Achievements blue) instead of single emerald color
+- Each day's square shows the color of the highest-priority event type present
 
 ### v2.6.1
 - User Stats: redesigned with clean 3-section layout (primary grid, recent activity, softcore)

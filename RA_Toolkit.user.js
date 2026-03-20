@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.6.1
+// @version      2.6.2
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,13 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.6.1";
+  var CURRENT_VERSION = "2.6.2";
 
   var CHANGELOG = [
+    { version: "2.6.2", changes: [
+      "Activity Timeline: multi-select now uses priority coloring per cell (Mastered > Beaten > Achievements) instead of single emerald color",
+      "Activity Timeline: each day shows the color of the highest-priority event type present"
+    ]},
     { version: "2.6.1", changes: [
       "User Stats: redesigned with clean 3-section layout (primary grid, recent activity, softcore)",
       "User Stats: new metric cards with icons, weighted/softcore sub-values",
@@ -3106,11 +3110,7 @@
         .enhanced-timeline-cell.beaten-2 { background: rgba(163,163,163,0.5); }
         .enhanced-timeline-cell.beaten-3 { background: rgba(163,163,163,0.75); }
         .enhanced-timeline-cell.beaten-4 { background: #a3a3a3; }
-        /* Combined mode (emerald) */
-        .enhanced-timeline-cell.combined-1 { background: rgba(16,185,129,0.25); }
-        .enhanced-timeline-cell.combined-2 { background: rgba(16,185,129,0.5); }
-        .enhanced-timeline-cell.combined-3 { background: rgba(16,185,129,0.75); }
-        .enhanced-timeline-cell.combined-4 { background: #10b981; }
+
         .enhanced-timeline-tooltip {
           position: fixed;
           z-index: 99999;
@@ -3760,13 +3760,6 @@
 
       var activeModes = { achievements: true, mastered: false, beaten: false };
 
-      var combinedTheme = {
-        prefix: 'combined',
-        color: '#10b981',
-        bg: 'rgba(16,185,129,0.12)',
-        legendColors: ['rgba(255,255,255,0.04)','rgba(16,185,129,0.25)','rgba(16,185,129,0.5)','rgba(16,185,129,0.75)','#10b981']
-      };
-
       function getActiveKeys() {
         var keys = [];
         for (var k in activeModes) { if (activeModes[k]) keys.push(k); }
@@ -3777,9 +3770,8 @@
         var activeKeys = getActiveKeys();
         if (activeKeys.length === 0) return '';
 
-        // Determine theme: single mode uses its own, multiple uses combined
         var isSingle = activeKeys.length === 1;
-        var theme = isSingle ? modes[activeKeys[0]] : combinedTheme;
+        var theme = isSingle ? modes[activeKeys[0]] : null;
 
         // Merge dayMaps from active modes
         var mergedDayMap = {};
@@ -3808,7 +3800,18 @@
         var cellSize = Math.max(8, Math.floor((content.offsetWidth - 32) / (numWeeks + 1)));
         if (cellSize > 14) cellSize = 14;
 
-        var levelPrefix = theme.prefix === 'level' ? 'level' : theme.prefix;
+        var levelPrefix = theme ? (theme.prefix === 'level' ? 'level' : theme.prefix) : null;
+
+        // Priority order for multi-mode cell coloring: mastered > beaten > achievements
+        var priorityOrder = ['mastered', 'beaten', 'achievements'];
+        function getCellPrefix(date) {
+          if (levelPrefix) return levelPrefix;
+          for (var i = 0; i < priorityOrder.length; i++) {
+            var k = priorityOrder[i];
+            if (activeModes[k] && modes[k].dayMap[date]) return modes[k].prefix === 'level' ? 'level' : modes[k].prefix;
+          }
+          return 'level';
+        }
 
         var html = '<div class="enhanced-timeline-wrapper">';
         html += '<div class="enhanced-timeline-table" style="grid-template-columns:28px repeat(' + numWeeks + ',' + cellSize + 'px);grid-template-rows:auto repeat(7,' + cellSize + 'px);">';
@@ -3852,7 +3855,8 @@
                 }
               });
               var dateStr = monthNames[cell.day.getMonth()] + ' ' + cell.day.getDate() + ', ' + cell.day.getFullYear();
-              var cls = level === 0 ? 'level-0' : (levelPrefix + '-' + level);
+              var cellPfx = level === 0 ? 'level' : getCellPrefix(cell.date);
+              var cls = level === 0 ? 'level-0' : (cellPfx + '-' + level);
               html += '<div class="enhanced-timeline-cell ' + cls + '" data-tip-date="' + escapeHtml(dateStr) + '" data-tip-lines="' + escapeHtml(tooltipLines.join(';;')) + '"></div>';
             } else {
               html += '<div></div>';
@@ -3872,11 +3876,17 @@
         html += '<div class="enhanced-timeline-footer">';
         html += '<span>' + footerParts.join(', ') + ' in ' + activeDays + ' days</span>';
         html += '<div class="enhanced-timeline-legend">';
-        html += '<span>Less</span>';
-        for (var li = 0; li < theme.legendColors.length; li++) {
-          html += '<div class="enhanced-timeline-legend-cell" style="background:' + theme.legendColors[li] + ';"></div>';
+        if (isSingle) {
+          html += '<span>Less</span>';
+          for (var li = 0; li < theme.legendColors.length; li++) {
+            html += '<div class="enhanced-timeline-legend-cell" style="background:' + theme.legendColors[li] + ';"></div>';
+          }
+          html += '<span>More</span>';
+        } else {
+          activeKeys.forEach(function (key) {
+            html += '<span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;">' + modes[key].icon + '<div class="enhanced-timeline-legend-cell" style="background:' + modes[key].color + ';"></div></span>';
+          });
         }
-        html += '<span>More</span>';
         html += '</div></div>';
 
         return html;
