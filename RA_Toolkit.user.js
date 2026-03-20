@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.6.0
+// @version      2.6.1
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,14 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.6.0";
+  var CURRENT_VERSION = "2.6.1";
 
   var CHANGELOG = [
+    { version: "2.6.1", changes: [
+      "User Stats: redesigned with clean 3-section layout (primary grid, recent activity, softcore)",
+      "User Stats: new metric cards with icons, weighted/softcore sub-values",
+      "Removed Console Breakdown section (redundant with native Progression Status)"
+    ]},
     { version: "2.6.0", changes: [
       "Enhanced User Stats: replaces native User Stats with beautiful card-style layout",
       "User Stats: primary stats (Points, Rank, Achievements, RetroRatio, Games Beaten) with icons and colors",
@@ -2858,86 +2863,28 @@
           margin-top: 2px;
         }
         /* Enhanced User Stats */
-        .enhanced-user-stats {
-          margin-bottom: 16px;
-        }
-        .enhanced-user-stats-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 10px;
-        }
-        .enhanced-user-stats-title {
-          font-size: 1.1rem;
-          font-weight: 700;
-          color: #e4e4e7;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .enhanced-user-stats-toggle {
-          background: none;
-          border: none;
-          color: #737373;
-          cursor: pointer;
-          font-size: 0.7rem;
-          padding: 2px 6px;
-          border-radius: 4px;
-          transition: all 0.15s;
-        }
-        .enhanced-user-stats-toggle:hover {
-          color: #a3a3a3;
-          background: rgba(255,255,255,0.06);
-        }
-        .enhanced-user-stats-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-          gap: 8px;
-        }
-        .enhanced-user-stats-card {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 8px;
-          padding: 10px 12px;
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-          transition: border-color 0.2s;
-        }
-        .enhanced-user-stats-card:hover {
-          border-color: rgba(255,255,255,0.15);
-        }
-        .enhanced-user-stats-card .stat-icon {
-          font-size: 0.85rem;
-          margin-bottom: 2px;
-        }
-        .enhanced-user-stats-card .stat-value {
-          font-size: 1.15rem;
-          font-weight: 700;
-          color: #e4e4e7;
-          line-height: 1.2;
-        }
-        .enhanced-user-stats-card .stat-label {
-          font-size: 0.65rem;
-          color: #737373;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-        .enhanced-user-stats-card .stat-sub {
-          font-size: 0.6rem;
-          color: #525252;
-        }
-        .enhanced-user-stats-secondary {
-          margin-top: 8px;
-          overflow: hidden;
-          max-height: 0;
-          opacity: 0;
-          transition: max-height 0.3s ease, opacity 0.2s ease, margin-top 0.2s ease;
-        }
-        .enhanced-user-stats-secondary.expanded {
-          max-height: 300px;
-          opacity: 1;
-        }
+        .ra-stats-root { padding: 0; }
+        .ra-stats-title { font-size: 11px; font-weight: 500; color: #9ca3af; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 14px; }
+        .ra-primary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+        .ra-metric-card { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+        .ra-card-top { display: flex; align-items: center; justify-content: space-between; }
+        .ra-metric-label { font-size: 11px; color: #9ca3af; }
+        .ra-card-icon { font-size: 14px; line-height: 1; opacity: 0.7; }
+        .ra-metric-value { font-size: 20px; font-weight: 500; line-height: 1.1; }
+        .ra-metric-sub { font-size: 11px; color: #9ca3af; }
+        .ra-stats-divider { border: none; border-top: 0.5px solid rgba(255,255,255,0.1); margin: 14px 0; }
+        .ra-section-label { font-size: 11px; font-weight: 500; color: #9ca3af; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+        .ra-inline-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; }
+        .ra-inline-row { display: flex; align-items: baseline; justify-content: space-between; padding: 6px 0; border-bottom: 0.5px solid rgba(255,255,255,0.1); }
+        .ra-inline-row:last-child { border-bottom: none; }
+        .ra-inline-label { font-size: 12px; color: #d1d5db; }
+        .ra-inline-value { font-size: 13px; font-weight: 500; color: #f9fafb; }
+        .ra-softcore-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .ra-softcore-item { padding: 8px 0; border-right: 0.5px solid rgba(255,255,255,0.1); padding-right: 14px; margin-right: 14px; }
+        .ra-softcore-item:last-child { border-right: none; padding-right: 0; margin-right: 0; }
+        .ra-softcore-val { font-size: 15px; font-weight: 500; color: #d1d5db; line-height: 1.2; }
+        .ra-softcore-lbl { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+        .ra-softcore-sub { font-size: 10px; color: #9ca3af; }
         /* Player Insights Dashboard */
         .enhanced-dashboard {
           margin-bottom: 16px;
@@ -3042,56 +2989,7 @@
           background: linear-gradient(90deg, #3b82f6, #60a5fa);
           transition: width 0.5s ease;
         }
-        .enhanced-console-row {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 5px 0;
-        }
-        .enhanced-console-icon {
-          width: 20px;
-          height: 20px;
-          flex-shrink: 0;
-        }
-        .enhanced-console-name {
-          font-size: 0.78rem;
-          color: #a3a3a3;
-          width: 50px;
-          flex-shrink: 0;
-        }
-        .enhanced-console-bar-bg {
-          flex: 1;
-          height: 14px;
-          border-radius: 4px;
-          background: rgba(255,255,255,0.04);
-          position: relative;
-          overflow: hidden;
-        }
-        .enhanced-console-bar-fill {
-          height: 100%;
-          border-radius: 4px;
-          background: linear-gradient(90deg, #3b82f6, #60a5fa);
-          transition: width 0.6s ease;
-          min-width: 2px;
-        }
-        .enhanced-console-bar-label {
-          position: absolute;
-          right: 6px;
-          top: 0;
-          bottom: 0;
-          display: flex;
-          align-items: center;
-          font-size: 0.65rem;
-          color: #d4d4d8;
-          text-shadow: 0 1px 2px rgba(0,0,0,0.6);
-        }
-        .enhanced-console-count {
-          font-size: 0.72rem;
-          color: #737373;
-          width: 32px;
-          text-align: right;
-          flex-shrink: 0;
-        }
+
         .enhanced-dashboard-skeleton {
           animation: enhanced-skeleton-pulse 1.5s ease-in-out infinite;
           background: rgba(255,255,255,0.06);
@@ -3379,106 +3277,145 @@
       }
       if (!userStatsH2) return;
 
-      // Find the container wrapping the User Stats heading + collapsible content
       var statsContainer = userStatsH2.closest('[x-data]');
       if (!statsContainer) statsContainer = userStatsH2.parentElement.parentElement;
       if (!statsContainer) return;
 
       // Scrape all stat elements: label → value pairs
       var statEls = statsContainer.querySelectorAll('.relative.flex.w-full.items-center.justify-between');
-      var scrapedStats = {};
+      var s = {};
       statEls.forEach(function (el) {
         var ps = el.querySelectorAll('p');
         if (ps.length >= 2) {
           var label = (ps[0].textContent || '').trim();
           var value = (ps[1].textContent || '').trim();
-          if (label) scrapedStats[label] = value;
+          if (label) s[label] = value;
         }
       });
 
-      if (Object.keys(scrapedStats).length === 0) return;
+      if (Object.keys(s).length === 0) return;
 
-      // Stat definitions with icons, colors, and categorization
-      var primaryDefs = [
-        { key: 'Points', icon: '⭐', color: '#a78bfa', extractSub: true },
-        { key: 'Site rank', icon: '🏅', color: '#fbbf24' },
-        { key: 'Achievements unlocked', icon: '🏆', color: '#3b82f6' },
-        { key: 'RetroRatio', icon: '📊', color: '#10b981' },
-        { key: 'Total games beaten', icon: '🎮', color: '#f472b6' },
-        { key: 'Started games beaten', icon: '📈', color: '#38bdf8' },
+      // Parse helpers
+      function val(key) { return s[key] || ''; }
+      function extractWeighted(raw) {
+        var m = raw.match(/^([\d,.\s]+)\s*\((.+)\)$/);
+        return m ? { main: m[1].trim(), weighted: m[2].trim() } : { main: raw, weighted: '' };
+      }
+      function extractRankTotal(raw) {
+        var m = raw.match(/#([\d,]+)\s*of\s*([\d,]+)/i);
+        return m ? { rank: '#' + m[1], total: 'of ' + m[2] } : { rank: raw, total: '' };
+      }
+      function extractBeatenRetail(raw) {
+        var m = raw.match(/^(\d+)\s*\((.+)\)$/);
+        return m ? { count: m[1], retail: m[2].trim() } : { count: raw, retail: '' };
+      }
+
+      // Primary cards
+      var pts = extractWeighted(val('Points'));
+      var rank = extractRankTotal(val('Site rank'));
+      var beaten = extractBeatenRetail(val('Total games beaten'));
+
+      var primaryHtml = ''
+        + '<div class="ra-metric-card">'
+          + '<div class="ra-card-top"><span class="ra-metric-label">Points</span><span class="ra-card-icon">⭐</span></div>'
+          + '<div class="ra-metric-value" style="color:#a78bfa;">' + escapeHtml(pts.main) + '</div>'
+          + (pts.weighted ? '<div class="ra-metric-sub">' + escapeHtml(pts.weighted) + ' weighted</div>' : '')
+        + '</div>'
+        + '<div class="ra-metric-card">'
+          + '<div class="ra-card-top"><span class="ra-metric-label">Site rank</span><span class="ra-card-icon">🏅</span></div>'
+          + '<div class="ra-metric-value" style="color:#fbbf24;font-size:16px;">' + escapeHtml(rank.rank) + '</div>'
+          + (rank.total ? '<div class="ra-metric-sub">' + escapeHtml(rank.total) + '</div>' : '')
+        + '</div>'
+        + '<div class="ra-metric-card">'
+          + '<div class="ra-card-top"><span class="ra-metric-label">Achievements</span><span class="ra-card-icon">🏆</span></div>'
+          + '<div class="ra-metric-value" style="color:#3b82f6;">' + escapeHtml(val('Achievements unlocked')) + '</div>'
+        + '</div>'
+        + '<div class="ra-metric-card">'
+          + '<div class="ra-card-top"><span class="ra-metric-label">RetroRatio</span><span class="ra-card-icon">📊</span></div>'
+          + '<div class="ra-metric-value" style="color:#10b981;">' + escapeHtml(val('RetroRatio')) + '</div>'
+        + '</div>'
+        + '<div class="ra-metric-card">'
+          + '<div class="ra-card-top"><span class="ra-metric-label">Games beaten</span><span class="ra-card-icon">🎮</span></div>'
+          + '<div class="ra-metric-value" style="color:#f472b6;">' + escapeHtml(beaten.count) + '</div>'
+          + (beaten.retail ? '<div class="ra-metric-sub">' + escapeHtml(beaten.retail) + '</div>' : '')
+        + '</div>'
+        + '<div class="ra-metric-card">'
+          + '<div class="ra-card-top"><span class="ra-metric-label">Beaten rate</span><span class="ra-card-icon">📈</span></div>'
+          + '<div class="ra-metric-value" style="color:#38bdf8;font-size:18px;">' + escapeHtml(val('Started games beaten')) + '</div>'
+        + '</div>';
+
+      // Recent activity section
+      var recentDefs = [
+        { key: 'Points earned in the last 7 days', label: 'Points (7 days)' },
+        { key: 'Points earned in the last 30 days', label: 'Points (30 days)' },
+        { key: 'Average points per week', label: 'Avg pts / week' },
+        { key: 'Average completion', label: 'Avg completion' },
       ];
+      var recentLeftHtml = '';
+      var recentRightHtml = '';
+      var hasRecent = false;
+      recentDefs.forEach(function (def, i) {
+        var v = val(def.key);
+        if (!v) return;
+        hasRecent = true;
+        var row = '<div class="ra-inline-row"><span class="ra-inline-label">' + escapeHtml(def.label) + '</span><span class="ra-inline-value">' + escapeHtml(v) + '</span></div>';
+        if (i < 2) recentLeftHtml += row; else recentRightHtml += row;
+      });
 
-      var secondaryDefs = [
-        { key: 'Points earned in the last 7 days', icon: '📅', color: '#e4e4e7', shortLabel: 'Points (7 days)' },
-        { key: 'Points earned in the last 30 days', icon: '📆', color: '#e4e4e7', shortLabel: 'Points (30 days)' },
-        { key: 'Average points per week', icon: '📉', color: '#e4e4e7', shortLabel: 'Avg points/week' },
-        { key: 'Average completion', icon: '🎯', color: '#e4e4e7', shortLabel: 'Avg completion' },
-        { key: 'Points (softcore)', icon: '⚡', color: '#737373' },
-        { key: 'Softcore rank', icon: '🥈', color: '#737373' },
-        { key: 'Achievements unlocked (softcore)', icon: '🔓', color: '#737373', shortLabel: 'Achievements (softcore)' },
+      // Softcore section
+      var softcoreDefs = [
+        { key: 'Points (softcore)', label: 'Points' },
+        { key: 'Softcore rank', label: 'Rank' },
+        { key: 'Achievements unlocked (softcore)', label: 'Achievements' },
       ];
-
-      function buildCard(def) {
-        var rawValue = scrapedStats[def.key];
-        if (rawValue === undefined || rawValue === null) return '';
-        var mainValue = rawValue;
-        var subValue = '';
-        // Extract weighted points from "9,391 (27,649)" format
-        if (def.extractSub) {
-          var match = rawValue.match(/^([\d,.\s]+)\s*\((.+)\)$/);
-          if (match) {
-            mainValue = match[1].trim();
-            subValue = '(' + match[2].trim() + ' weighted)';
-          }
+      var softcoreHtml = '';
+      var hasSoftcore = false;
+      softcoreDefs.forEach(function (def) {
+        var v = val(def.key);
+        if (!v) return;
+        hasSoftcore = true;
+        var parsed = extractRankTotal(v);
+        if (def.key === 'Softcore rank' && parsed.total) {
+          softcoreHtml += '<div class="ra-softcore-item">'
+            + '<div class="ra-softcore-val">' + escapeHtml(parsed.rank) + '</div>'
+            + '<div class="ra-softcore-sub">' + escapeHtml(parsed.total) + '</div>'
+            + '<div class="ra-softcore-lbl">' + escapeHtml(def.label) + '</div>'
+            + '</div>';
+        } else {
+          softcoreHtml += '<div class="ra-softcore-item">'
+            + '<div class="ra-softcore-val">' + escapeHtml(v) + '</div>'
+            + '<div class="ra-softcore-lbl">' + escapeHtml(def.label) + '</div>'
+            + '</div>';
         }
-        var label = def.shortLabel || def.key;
-        return '<div class="enhanced-user-stats-card">'
-          + '<div class="stat-icon">' + def.icon + '</div>'
-          + '<div class="stat-value" style="color:' + def.color + ';">' + escapeHtml(mainValue) + '</div>'
-          + '<div class="stat-label">' + escapeHtml(label) + '</div>'
-          + (subValue ? '<div class="stat-sub">' + escapeHtml(subValue) + '</div>' : '')
+      });
+
+      // Build full HTML
+      var html = '<div class="ra-stats-root">'
+        + '<div class="ra-stats-title">User Stats</div>'
+        + '<div class="ra-primary-grid">' + primaryHtml + '</div>';
+
+      if (hasRecent) {
+        html += '<hr class="ra-stats-divider">'
+          + '<div class="ra-section-label">Recent activity</div>'
+          + '<div class="ra-inline-grid">'
+            + '<div>' + recentLeftHtml + '</div>'
+            + '<div>' + recentRightHtml + '</div>'
           + '</div>';
       }
 
-      var primaryHtml = '';
-      primaryDefs.forEach(function (def) { primaryHtml += buildCard(def); });
+      if (hasSoftcore) {
+        html += '<hr class="ra-stats-divider">'
+          + '<div class="ra-section-label">Softcore</div>'
+          + '<div class="ra-softcore-grid">' + softcoreHtml + '</div>';
+      }
 
-      var secondaryHtml = '';
-      var hasSecondary = false;
-      secondaryDefs.forEach(function (def) {
-        var card = buildCard(def);
-        if (card) { secondaryHtml += card; hasSecondary = true; }
-      });
+      html += '</div>';
 
       var enhancedDiv = document.createElement('div');
-      enhancedDiv.className = 'enhanced-user-stats';
-      enhancedDiv.innerHTML =
-        '<div class="enhanced-user-stats-header">'
-          + '<div class="enhanced-user-stats-title">📋 User Stats</div>'
-          + (hasSecondary ? '<button class="enhanced-user-stats-toggle" id="enhanced-user-stats-more">▼ more</button>' : '')
-        + '</div>'
-        + '<div class="enhanced-user-stats-grid">' + primaryHtml + '</div>'
-        + (hasSecondary
-            ? '<div class="enhanced-user-stats-secondary" id="enhanced-user-stats-extra">'
-              + '<div class="enhanced-user-stats-grid">' + secondaryHtml + '</div>'
-              + '</div>'
-            : '');
+      enhancedDiv.innerHTML = html;
 
-      // Replace native section
       statsContainer.parentNode.insertBefore(enhancedDiv, statsContainer);
       statsContainer.style.display = 'none';
-
-      // Toggle secondary stats
-      if (hasSecondary) {
-        var moreBtn = document.getElementById('enhanced-user-stats-more');
-        var extraDiv = document.getElementById('enhanced-user-stats-extra');
-        if (moreBtn && extraDiv) {
-          moreBtn.addEventListener('click', function () {
-            var expanded = extraDiv.classList.toggle('expanded');
-            moreBtn.textContent = expanded ? '▲ less' : '▼ more';
-          });
-        }
-      }
     })();
 
     // =========================================
@@ -3525,19 +3462,6 @@
         + '<div class="enhanced-dashboard-skeleton" style="height:48px;animation-delay:0.2s;"></div>'
       + '</div>';
     dashboardDiv.appendChild(almostSection);
-
-    // Console Breakdown section
-    var consoleSection = document.createElement('div');
-    consoleSection.className = 'enhanced-dashboard-section';
-    consoleSection.innerHTML =
-      '<div class="enhanced-dashboard-section-title">🎮 Console Breakdown</div>'
-      + '<div class="enhanced-console-list">'
-        + '<div class="enhanced-dashboard-skeleton" style="height:22px;margin-bottom:6px;"></div>'
-        + '<div class="enhanced-dashboard-skeleton" style="height:22px;margin-bottom:6px;animation-delay:0.1s;"></div>'
-        + '<div class="enhanced-dashboard-skeleton" style="height:22px;margin-bottom:6px;animation-delay:0.2s;"></div>'
-        + '<div class="enhanced-dashboard-skeleton" style="height:22px;animation-delay:0.3s;"></div>'
-      + '</div>';
-    dashboardDiv.appendChild(consoleSection);
 
     // Streak Tracker section
     var streakSection = document.createElement('div');
@@ -3610,31 +3534,6 @@
             + '<div class="enhanced-almost-bar-bg"><div class="enhanced-almost-bar-fill" style="width:' + pct + '%;"></div></div>'
           + '</div>';
         list.appendChild(item);
-      });
-    }
-
-    function renderConsoleBreakdown(consoles) {
-      var list = consoleSection.querySelector('.enhanced-console-list');
-      if (!consoles || consoles.length === 0) {
-        list.innerHTML = '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">No console data available.</div>';
-        return;
-      }
-      list.innerHTML = '';
-      var maxCount = consoles[0].count;
-
-      consoles.forEach(function (c) {
-        var barPct = maxCount > 0 ? Math.round((c.count / maxCount) * 100) : 0;
-
-        var row = document.createElement('div');
-        row.className = 'enhanced-console-row';
-        row.innerHTML =
-          '<img class="enhanced-console-icon" src="' + escapeHtml(c.iconUrl) + '" alt="' + escapeHtml(c.shortName) + '" title="' + escapeHtml(c.consoleName) + '" loading="lazy">'
-          + '<div class="enhanced-console-name">' + escapeHtml(c.shortName) + '</div>'
-          + '<div class="enhanced-console-bar-bg">'
-            + '<div class="enhanced-console-bar-fill" style="width:' + barPct + '%;"></div>'
-            + '<div class="enhanced-console-bar-label">' + c.count + ' game' + (c.count !== 1 ? 's' : '') + '</div>'
-          + '</div>';
-        list.appendChild(row);
       });
     }
 
@@ -4170,17 +4069,8 @@
     }
 
     function fetchDashboardData() {
-      // Scrape console data from DOM immediately
+      // Scrape console data from DOM for totalGames/totalMastered stats
       var domData = scrapeConsoleBreakdown();
-
-      // Render Console Breakdown from DOM data right away (no API needed)
-      if (domData.consoles.length > 0) {
-        domData.consoles.sort(function (a, b) { return b.count - a.count; });
-        renderConsoleBreakdown(domData.consoles.slice(0, 10));
-      } else {
-        var list = consoleSection.querySelector('.enhanced-console-list');
-        list.innerHTML = '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">No console data found on page.</div>';
-      }
 
       var summaryUrl = 'https://retroachievements.org/API/API_GetUserSummary.php'
         + '?u=' + encodeURIComponent(targetUser)
