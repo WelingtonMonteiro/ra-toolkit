@@ -14,7 +14,7 @@
   <a href="https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js">
     <img src="https://img.shields.io/badge/Install-Tampermonkey-green?logo=tampermonkey" alt="Install">
   </a>
-  <img src="https://img.shields.io/badge/version-2.6.2-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.6.3-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
 </p>
 
@@ -135,6 +135,11 @@ Injected on user profile pages (`/user/{username}`) with 6 modules:
 ---
 
 ## 📋 Changelog
+
+### v2.6.3
+- User Stats: recent activity and softcore sections now use metric cards with icons (consistent with primary stats)
+- User Stats: CSS refactored to generic class names for cleaner structure
+- Activity Timeline: all 3 modes (Achievements, Mastered, Beaten) now active by default
 
 ### v2.6.2
 - Activity Timeline: multi-select now uses priority coloring per cell (Mastered gold > Beaten gray > Achievements blue) instead of single emerald color

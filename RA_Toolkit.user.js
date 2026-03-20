@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.6.2
+// @version      2.6.3
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -207,9 +207,14 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.6.2";
+  var CURRENT_VERSION = "2.6.3";
 
   var CHANGELOG = [
+    { version: "2.6.3", changes: [
+      "User Stats: recent activity and softcore sections now use metric cards with icons (consistent with primary stats)",
+      "User Stats: CSS refactored to generic class names (stats-grid-3/4, metric-card, card-top, etc.)",
+      "Activity Timeline: all 3 modes (Achievements, Mastered, Beaten) active by default"
+    ]},
     { version: "2.6.2", changes: [
       "Activity Timeline: multi-select now uses priority coloring per cell (Mastered > Beaten > Achievements) instead of single emerald color",
       "Activity Timeline: each day shows the color of the highest-priority event type present"
@@ -2867,28 +2872,19 @@
           margin-top: 2px;
         }
         /* Enhanced User Stats */
-        .ra-stats-root { padding: 0; }
-        .ra-stats-title { font-size: 11px; font-weight: 500; color: #9ca3af; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 14px; }
-        .ra-primary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-        .ra-metric-card { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
-        .ra-card-top { display: flex; align-items: center; justify-content: space-between; }
-        .ra-metric-label { font-size: 11px; color: #9ca3af; }
-        .ra-card-icon { font-size: 14px; line-height: 1; opacity: 0.7; }
-        .ra-metric-value { font-size: 20px; font-weight: 500; line-height: 1.1; }
-        .ra-metric-sub { font-size: 11px; color: #9ca3af; }
-        .ra-stats-divider { border: none; border-top: 0.5px solid rgba(255,255,255,0.1); margin: 14px 0; }
-        .ra-section-label { font-size: 11px; font-weight: 500; color: #9ca3af; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
-        .ra-inline-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; }
-        .ra-inline-row { display: flex; align-items: baseline; justify-content: space-between; padding: 6px 0; border-bottom: 0.5px solid rgba(255,255,255,0.1); }
-        .ra-inline-row:last-child { border-bottom: none; }
-        .ra-inline-label { font-size: 12px; color: #d1d5db; }
-        .ra-inline-value { font-size: 13px; font-weight: 500; color: #f9fafb; }
-        .ra-softcore-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        .ra-softcore-item { padding: 8px 0; border-right: 0.5px solid rgba(255,255,255,0.1); padding-right: 14px; margin-right: 14px; }
-        .ra-softcore-item:last-child { border-right: none; padding-right: 0; margin-right: 0; }
-        .ra-softcore-val { font-size: 15px; font-weight: 500; color: #d1d5db; line-height: 1.2; }
-        .ra-softcore-lbl { font-size: 11px; color: #9ca3af; margin-top: 2px; }
-        .ra-softcore-sub { font-size: 10px; color: #9ca3af; }
+        .stats-root { padding: 0; }
+        .stats-title { font-size: 11px; font-weight: 500; color: #9ca3af; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 14px; }
+        .stats-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+        .stats-grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+        .metric-card { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+        .card-top { display: flex; align-items: center; justify-content: space-between; }
+        .metric-label { font-size: 11px; color: #9ca3af; }
+        .card-icon { font-size: 14px; line-height: 1; opacity: 0.7; }
+        .metric-value { font-size: 20px; font-weight: 500; line-height: 1.1; }
+        .metric-value-sm { font-size: 16px; font-weight: 500; line-height: 1.1; }
+        .metric-sub { font-size: 11px; color: #9ca3af; }
+        .stats-divider { border: none; border-top: 0.5px solid rgba(255,255,255,0.1); margin: 14px 0; }
+        .section-label { font-size: 11px; font-weight: 500; color: #9ca3af; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
         /* Player Insights Dashboard */
         .enhanced-dashboard {
           margin-bottom: 16px;
@@ -3316,57 +3312,58 @@
       var beaten = extractBeatenRetail(val('Total games beaten'));
 
       var primaryHtml = ''
-        + '<div class="ra-metric-card">'
-          + '<div class="ra-card-top"><span class="ra-metric-label">Points</span><span class="ra-card-icon">⭐</span></div>'
-          + '<div class="ra-metric-value" style="color:#a78bfa;">' + escapeHtml(pts.main) + '</div>'
-          + (pts.weighted ? '<div class="ra-metric-sub">' + escapeHtml(pts.weighted) + ' weighted</div>' : '')
+        + '<div class="metric-card">'
+          + '<div class="card-top"><span class="metric-label">Points</span><span class="card-icon">⭐</span></div>'
+          + '<div class="metric-value" style="color:#a78bfa;">' + escapeHtml(pts.main) + '</div>'
+          + (pts.weighted ? '<div class="metric-sub">' + escapeHtml(pts.weighted) + ' weighted</div>' : '')
         + '</div>'
-        + '<div class="ra-metric-card">'
-          + '<div class="ra-card-top"><span class="ra-metric-label">Site rank</span><span class="ra-card-icon">🏅</span></div>'
-          + '<div class="ra-metric-value" style="color:#fbbf24;font-size:16px;">' + escapeHtml(rank.rank) + '</div>'
-          + (rank.total ? '<div class="ra-metric-sub">' + escapeHtml(rank.total) + '</div>' : '')
+        + '<div class="metric-card">'
+          + '<div class="card-top"><span class="metric-label">Site rank</span><span class="card-icon">🏅</span></div>'
+          + '<div class="metric-value-sm" style="color:#fbbf24;">' + escapeHtml(rank.rank) + '</div>'
+          + (rank.total ? '<div class="metric-sub">' + escapeHtml(rank.total) + '</div>' : '')
         + '</div>'
-        + '<div class="ra-metric-card">'
-          + '<div class="ra-card-top"><span class="ra-metric-label">Achievements</span><span class="ra-card-icon">🏆</span></div>'
-          + '<div class="ra-metric-value" style="color:#3b82f6;">' + escapeHtml(val('Achievements unlocked')) + '</div>'
+        + '<div class="metric-card">'
+          + '<div class="card-top"><span class="metric-label">Achievements</span><span class="card-icon">🏆</span></div>'
+          + '<div class="metric-value" style="color:#3b82f6;">' + escapeHtml(val('Achievements unlocked')) + '</div>'
         + '</div>'
-        + '<div class="ra-metric-card">'
-          + '<div class="ra-card-top"><span class="ra-metric-label">RetroRatio</span><span class="ra-card-icon">📊</span></div>'
-          + '<div class="ra-metric-value" style="color:#10b981;">' + escapeHtml(val('RetroRatio')) + '</div>'
+        + '<div class="metric-card">'
+          + '<div class="card-top"><span class="metric-label">RetroRatio</span><span class="card-icon">📊</span></div>'
+          + '<div class="metric-value" style="color:#10b981;">' + escapeHtml(val('RetroRatio')) + '</div>'
         + '</div>'
-        + '<div class="ra-metric-card">'
-          + '<div class="ra-card-top"><span class="ra-metric-label">Games beaten</span><span class="ra-card-icon">🎮</span></div>'
-          + '<div class="ra-metric-value" style="color:#f472b6;">' + escapeHtml(beaten.count) + '</div>'
-          + (beaten.retail ? '<div class="ra-metric-sub">' + escapeHtml(beaten.retail) + '</div>' : '')
+        + '<div class="metric-card">'
+          + '<div class="card-top"><span class="metric-label">Games beaten</span><span class="card-icon">🎮</span></div>'
+          + '<div class="metric-value" style="color:#f472b6;">' + escapeHtml(beaten.count) + '</div>'
+          + (beaten.retail ? '<div class="metric-sub">' + escapeHtml(beaten.retail) + '</div>' : '')
         + '</div>'
-        + '<div class="ra-metric-card">'
-          + '<div class="ra-card-top"><span class="ra-metric-label">Beaten rate</span><span class="ra-card-icon">📈</span></div>'
-          + '<div class="ra-metric-value" style="color:#38bdf8;font-size:18px;">' + escapeHtml(val('Started games beaten')) + '</div>'
+        + '<div class="metric-card">'
+          + '<div class="card-top"><span class="metric-label">Beaten rate</span><span class="card-icon">📈</span></div>'
+          + '<div class="metric-value" style="color:#38bdf8;">' + escapeHtml(val('Started games beaten')) + '</div>'
         + '</div>';
 
       // Recent activity section
       var recentDefs = [
-        { key: 'Points earned in the last 7 days', label: 'Points (7 days)' },
-        { key: 'Points earned in the last 30 days', label: 'Points (30 days)' },
-        { key: 'Average points per week', label: 'Avg pts / week' },
-        { key: 'Average completion', label: 'Avg completion' },
+        { key: 'Points earned in the last 7 days', label: 'Points (7 days)', icon: '📅' },
+        { key: 'Points earned in the last 30 days', label: 'Points (30 days)', icon: '📆' },
+        { key: 'Average points per week', label: 'Avg pts / week', icon: '📉' },
+        { key: 'Average completion', label: 'Avg completion', icon: '🎯' },
       ];
-      var recentLeftHtml = '';
-      var recentRightHtml = '';
+      var recentHtml = '';
       var hasRecent = false;
-      recentDefs.forEach(function (def, i) {
+      recentDefs.forEach(function (def) {
         var v = val(def.key);
         if (!v) return;
         hasRecent = true;
-        var row = '<div class="ra-inline-row"><span class="ra-inline-label">' + escapeHtml(def.label) + '</span><span class="ra-inline-value">' + escapeHtml(v) + '</span></div>';
-        if (i < 2) recentLeftHtml += row; else recentRightHtml += row;
+        recentHtml += '<div class="metric-card">'
+          + '<div class="card-top"><span class="metric-label">' + escapeHtml(def.label) + '</span><span class="card-icon">' + def.icon + '</span></div>'
+          + '<div class="metric-value" style="color:#e4e4e7;">' + escapeHtml(v) + '</div>'
+          + '</div>';
       });
 
       // Softcore section
       var softcoreDefs = [
-        { key: 'Points (softcore)', label: 'Points' },
-        { key: 'Softcore rank', label: 'Rank' },
-        { key: 'Achievements unlocked (softcore)', label: 'Achievements' },
+        { key: 'Points (softcore)', label: 'Points', icon: '⚡' },
+        { key: 'Softcore rank', label: 'Rank', icon: '🥈' },
+        { key: 'Achievements unlocked (softcore)', label: 'Achievements', icon: '🔓' },
       ];
       var softcoreHtml = '';
       var hasSoftcore = false;
@@ -3376,37 +3373,34 @@
         hasSoftcore = true;
         var parsed = extractRankTotal(v);
         if (def.key === 'Softcore rank' && parsed.total) {
-          softcoreHtml += '<div class="ra-softcore-item">'
-            + '<div class="ra-softcore-val">' + escapeHtml(parsed.rank) + '</div>'
-            + '<div class="ra-softcore-sub">' + escapeHtml(parsed.total) + '</div>'
-            + '<div class="ra-softcore-lbl">' + escapeHtml(def.label) + '</div>'
+          softcoreHtml += '<div class="metric-card">'
+            + '<div class="card-top"><span class="metric-label">' + escapeHtml(def.label) + '</span><span class="card-icon">' + def.icon + '</span></div>'
+            + '<div class="metric-value-sm" style="color:#737373;">' + escapeHtml(parsed.rank) + '</div>'
+            + '<div class="metric-sub">' + escapeHtml(parsed.total) + '</div>'
             + '</div>';
         } else {
-          softcoreHtml += '<div class="ra-softcore-item">'
-            + '<div class="ra-softcore-val">' + escapeHtml(v) + '</div>'
-            + '<div class="ra-softcore-lbl">' + escapeHtml(def.label) + '</div>'
+          softcoreHtml += '<div class="metric-card">'
+            + '<div class="card-top"><span class="metric-label">' + escapeHtml(def.label) + '</span><span class="card-icon">' + def.icon + '</span></div>'
+            + '<div class="metric-value" style="color:#737373;">' + escapeHtml(v) + '</div>'
             + '</div>';
         }
       });
 
       // Build full HTML
-      var html = '<div class="ra-stats-root">'
-        + '<div class="ra-stats-title">User Stats</div>'
-        + '<div class="ra-primary-grid">' + primaryHtml + '</div>';
+      var html = '<div class="stats-root">'
+        + '<div class="stats-title">User Stats</div>'
+        + '<div class="stats-grid-3">' + primaryHtml + '</div>';
 
       if (hasRecent) {
-        html += '<hr class="ra-stats-divider">'
-          + '<div class="ra-section-label">Recent activity</div>'
-          + '<div class="ra-inline-grid">'
-            + '<div>' + recentLeftHtml + '</div>'
-            + '<div>' + recentRightHtml + '</div>'
-          + '</div>';
+        html += '<hr class="stats-divider">'
+          + '<div class="section-label">Recent activity</div>'
+          + '<div class="stats-grid-4">' + recentHtml + '</div>';
       }
 
       if (hasSoftcore) {
-        html += '<hr class="ra-stats-divider">'
-          + '<div class="ra-section-label">Softcore</div>'
-          + '<div class="ra-softcore-grid">' + softcoreHtml + '</div>';
+        html += '<hr class="stats-divider">'
+          + '<div class="section-label">Softcore</div>'
+          + '<div class="stats-grid-3">' + softcoreHtml + '</div>';
       }
 
       html += '</div>';
@@ -3758,7 +3752,7 @@
         }
       };
 
-      var activeModes = { achievements: true, mastered: false, beaten: false };
+      var activeModes = { achievements: true, mastered: true, beaten: true };
 
       function getActiveKeys() {
         var keys = [];
@@ -3926,7 +3920,7 @@
       var outerHtml = '<div class="enhanced-timeline-toggle-bar">';
       ['achievements', 'mastered', 'beaten'].forEach(function (key) {
         var m = modes[key];
-        var activeClass = key === 'achievements' ? ' active' : '';
+        var activeClass = ' active';
         outerHtml += '<button class="enhanced-timeline-toggle-btn' + activeClass + '" data-mode="' + key + '" '
           + 'style="--toggle-color:' + m.color + ';--toggle-bg:' + m.bg + ';">'
           + m.label + '</button>';
