@@ -220,7 +220,6 @@
       "Added Chart.js @require for chart rendering"
     ]},
     { version: "2.6.3", changes: [
-    { version: "2.6.3", changes: [
       "User Stats: recent activity and softcore sections now use metric cards with icons (consistent with primary stats)",
       "User Stats: CSS refactored to generic class names (stats-grid-3/4, metric-card, card-top, etc.)",
       "Activity Timeline: all 3 modes (Achievements, Mastered, Beaten) active by default"
