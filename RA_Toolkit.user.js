@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.6.4
+// @version      2.6.5
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -208,9 +208,14 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.6.4";
+  var CURRENT_VERSION = "2.6.5";
 
   var CHANGELOG = [
+    { version: "2.6.5", changes: [
+      "Rarest Achievements: items are now clickable links to /achievement/{id}",
+      "Last Games Played: Beaten/Mastered award labels shown on all paginated pages (via awards API)",
+      "Last Games Played: page range info moved from heading to pagination bar"
+    ]},
     { version: "2.6.4", changes: [
       "Progression Status: replaced native section with modern dark-theme dashboard",
       "Progression Status: KPI grid (total games, beaten, mastered, % completed)",
@@ -3034,6 +3039,14 @@
           gap: 10px;
           padding: 6px 0;
           border-bottom: 1px solid rgba(255,255,255,0.04);
+          text-decoration: none;
+          color: inherit;
+          cursor: pointer;
+          border-radius: 4px;
+          transition: background 0.15s;
+        }
+        .enhanced-rare-item:hover {
+          background: rgba(255,255,255,0.06);
         }
         .enhanced-rare-item:last-child { border-bottom: none; }
         .enhanced-rare-badge {
@@ -3656,8 +3669,9 @@
         var points = parseInt(a.Points, 10) || 0;
         var ratio = trueRatio > 0 && points > 0 ? (trueRatio / points).toFixed(1) : '—';
 
-        var item = document.createElement('div');
+        var item = document.createElement('a');
         item.className = 'enhanced-rare-item';
+        item.href = '/achievement/' + a.AchievementID;
         item.innerHTML =
           '<img class="enhanced-rare-badge" src="' + escapeHtml(badgeUrl) + '" alt="" loading="lazy">'
           + '<div class="enhanced-rare-info">'
@@ -4565,6 +4579,28 @@
             '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load rarity data.</div>';
         }
 
+        // --- Build gameAwardsMap from awards data (for pagination Beaten/Mastered labels) ---
+        var awardPriority = { 'mastered': 4, 'completed': 3, 'beaten-hardcore': 2, 'beaten-softcore': 1 };
+        if (awardsData && Array.isArray(awardsData.VisibleUserAwards)) {
+          awardsData.VisibleUserAwards.forEach(function (award) {
+            if (!award.AwardedAt || !award.AwardData) return;
+            var gameId = String(award.AwardData);
+            var aType = (award.AwardType || '').toLowerCase();
+            var extra = parseInt(award.AwardDataExtra, 10) || 0;
+            var kind = '';
+            if (aType === 'mastery/completion' || aType === 'mastery') {
+              kind = extra === 1 ? 'mastered' : 'completed';
+            } else if (aType === 'game beaten') {
+              kind = extra === 1 ? 'beaten-hardcore' : 'beaten-softcore';
+            }
+            if (!kind) return;
+            var existing = gameAwardsMap[gameId];
+            if (!existing || (awardPriority[kind] || 0) > (awardPriority[existing.awardKind] || 0)) {
+              gameAwardsMap[gameId] = { awardKind: kind, awardedAt: award.AwardedAt };
+            }
+          });
+        }
+
         // --- Activity Timeline (yearly data + awards) ---
         // Process awards for mastered/beaten heatmap modes
         var masteredDayMap = {};
@@ -4668,6 +4704,15 @@
       var nextTarget = currentPage + 1;
       var nextDisabled = !hasMore && currentPage >= lastPage;
       addBtn('\u276F', nextTarget, nextDisabled, false);
+
+      // Page range info (e.g. "6–10")
+      var rangeStart = offset + 1;
+      var rangeEnd = offset + ITEMS_PER_PAGE;
+      var rangeSpan = document.createElement('span');
+      rangeSpan.className = 'page-info';
+      rangeSpan.style.cssText = 'margin-left:8px;font-size:0.75rem;color:#a3a3a3;';
+      rangeSpan.textContent = '(' + rangeStart + '–' + rangeEnd + ')';
+      container.appendChild(rangeSpan);
     }
 
     // ConsoleID → { short name, icon filename } mapping (from RAWeb config/systems.php)
@@ -4703,6 +4748,9 @@
     // Cache for fetched achievement data per game
     var achievementCache = {};
     var playerCountCache = {};
+
+    // Map GameID → { awardKind, awardedAt } from API_GetUserAwards
+    var gameAwardsMap = {};
 
     function renderSkeletonBadges(container, count) {
       container.innerHTML = '';
@@ -4859,9 +4907,12 @@
         // Console info (short name + icon URL)
         var consoleInfo = getConsoleInfo(game.ConsoleID);
 
-        // Determine award state (infer from progress — API doesn't provide HighestAwardKind)
+        // Determine award state — prefer gameAwardsMap (accurate), fallback to progress inference
         var awardKind = '';
-        if (numTotal > 0 && numHC === numTotal) {
+        var awardInfo = gameAwardsMap[String(game.GameID)];
+        if (awardInfo) {
+          awardKind = awardInfo.awardKind;
+        } else if (numTotal > 0 && numHC === numTotal) {
           awardKind = 'mastered';
         } else if (numTotal > 0 && numAchieved === numTotal) {
           awardKind = 'completed';
@@ -4916,7 +4967,7 @@
               + '<div class="cprogress-pmeta__root">'
                 + '<a href="/game/' + game.GameID + '">' + escapeHtml(game.Title) + '</a>'
                 + (achHtml ? '<div class="flex flex-col"><p>' + achHtml + '</p>' + (pointsHtml ? '<p>' + pointsHtml + '</p>' : '') + '</div>' : '')
-                + (lastPlayedLabel ? '<div class="flex !flex-col-reverse"><p><span>Last played</span> ' + lastPlayedLabel + '</p></div>' : '')
+                + (lastPlayedLabel ? '<div class="flex !flex-col-reverse"><p><span>Last played</span> ' + lastPlayedLabel + '</p>' + (awardKind && awardTitles[awardKind] ? '<p><span class="hidden md:inline lg:hidden">&bull;</span> ' + awardTitles[awardKind] + (awardInfo && awardInfo.awardedAt ? ' <span style="color:#a3a3a3;font-size:0.75rem;">' + escapeHtml(new Date(awardInfo.awardedAt).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })) + '</span>' : '') + '</p>' : '') + '</div>' : '')
               + '</div>'
             + '</div>'
             // Right side: console badge + progress bar + award + toggle
@@ -5000,11 +5051,9 @@
           renderGames(games);
           renderPaginator(paginationDiv, offset, hasMore);
 
-          // Update heading
-          var start = offset + 1;
-          var end = offset + games.length;
+          // Update heading (keep clean, range info is in paginator)
           if (games.length > 0) {
-            recentH2.textContent = "Recently Played Games (" + start + "–" + end + ")";
+            recentH2.textContent = 'Recently Played Games';
           }
 
           recentH2.scrollIntoView({ behavior: "smooth", block: "start" });
