@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.6.5
+// @version      2.7.0
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -208,9 +208,14 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.6.5";
+  var CURRENT_VERSION = "2.7.0";
 
   var CHANGELOG = [
+    { version: "2.7.0", changes: [
+      "Game Awards: new Mastered/Beaten tabs in sidebar section",
+      "Game Awards: Beaten tab shows all beaten games with trophy icon and count",
+      "Game Awards: hardcore badges shown in gold, softcore slightly dimmed"
+    ]},
     { version: "2.6.5", changes: [
       "Rarest Achievements: items are now clickable links to /achievement/{id}",
       "Last Games Played: Beaten/Mastered award labels shown on all paginated pages (via awards API)",
@@ -441,7 +446,8 @@
                  "enhanced-custom-bg-style", "enhanced-glass-style", "enhanced-dl-style",
                  "enhanced-translate-style", "enhanced-pagination", "enhanced-pagination-style",
                  "enhanced-guide-link", "enhanced-changelog-overlay", "enhanced-rarity-style",
-                 "enhanced-collapse-style", "enhanced-wall-linkify-style"];
+                 "enhanced-collapse-style", "enhanced-wall-linkify-style",
+                 "re-game-awards-style", "re-game-awards-tabs"];
     ids.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.remove();
@@ -5070,6 +5076,226 @@
   }
 
   // =========================================
+  //   Game Awards — Beaten Tab
+  // =========================================
+  async function initGameAwardsBeaten() {
+    var page = location.pathname;
+    var userMatch = page.match(/^\/user\/([^\/?#]+)/);
+    if (!userMatch) return;
+
+    var targetUser = decodeURIComponent(userMatch[1]);
+    var apiKey = await GM_getValue("raApiKey", "");
+    if (!apiKey) return;
+
+    // Find the native Game Awards section in the sidebar
+    var gameAwardsDiv = document.getElementById('gameawards');
+    if (!gameAwardsDiv) return;
+
+    // Already injected?
+    if (document.getElementById('re-game-awards-tabs')) return;
+
+    var heading = gameAwardsDiv.querySelector('h3');
+    var nativeGrid = gameAwardsDiv.querySelector('.component');
+    if (!heading || !nativeGrid) return;
+
+    // Parse native counters from heading
+    var nativeCounters = heading.querySelector('.grow');
+    var nativeCounterSpans = heading.querySelectorAll('.cursor-help');
+
+    // Inject styles
+    if (!document.getElementById('re-game-awards-style')) {
+      var style = document.createElement('style');
+      style.id = 're-game-awards-style';
+      style.textContent = `
+        .re-awards-tabs {
+          display: flex;
+          gap: 0;
+          margin-bottom: 8px;
+          border-radius: 6px;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        .re-awards-tab {
+          flex: 1;
+          padding: 6px 10px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          text-align: center;
+          cursor: pointer;
+          background: transparent;
+          color: #a3a3a3;
+          border: none;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+        }
+        .re-awards-tab:hover { background: rgba(255,255,255,0.05); color: #e4e4e7; }
+        .re-awards-tab.active {
+          background: rgba(255,255,255,0.1);
+          color: #e4e4e7;
+        }
+        .re-awards-tab .re-tab-count {
+          font-size: 0.7rem;
+          background: rgba(255,255,255,0.1);
+          padding: 1px 6px;
+          border-radius: 10px;
+          min-width: 20px;
+          text-align: center;
+        }
+        .re-awards-tab.active .re-tab-count {
+          background: rgba(255,255,255,0.2);
+        }
+        .re-beaten-grid {
+          display: grid;
+          place-content: center;
+          gap: 8px;
+          grid-template-columns: repeat(auto-fill, minmax(52px, 52px));
+          background: var(--bg-embed, #18181b);
+          border-radius: 8px;
+          padding: 8px;
+        }
+        .re-beaten-badge {
+          position: relative;
+          display: inline-block;
+        }
+        .re-beaten-badge img {
+          width: 48px;
+          height: 48px;
+          border-radius: 4px;
+        }
+        .re-beaten-badge img.goldimage {
+          filter: none;
+        }
+        .re-beaten-badge img.softcore {
+          filter: grayscale(0.3) brightness(0.85);
+        }
+        .re-beaten-empty {
+          grid-column: 1 / -1;
+          text-align: center;
+          color: #525252;
+          font-size: 0.8rem;
+          padding: 12px 0;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Build tabs UI
+    var tabsDiv = document.createElement('div');
+    tabsDiv.id = 're-game-awards-tabs';
+    tabsDiv.className = 're-awards-tabs';
+
+    var masteredTab = document.createElement('button');
+    masteredTab.className = 're-awards-tab active';
+    masteredTab.innerHTML = '👑 Mastered <span class="re-tab-count" id="re-mastered-count">-</span>';
+
+    var beatenTab = document.createElement('button');
+    beatenTab.className = 're-awards-tab';
+    beatenTab.innerHTML = '🏆 Beaten <span class="re-tab-count" id="re-beaten-count">-</span>';
+
+    tabsDiv.appendChild(masteredTab);
+    tabsDiv.appendChild(beatenTab);
+
+    // Insert tabs before the grid
+    nativeGrid.parentNode.insertBefore(tabsDiv, nativeGrid);
+
+    // Create beaten grid (hidden by default)
+    var beatenGrid = document.createElement('div');
+    beatenGrid.className = 're-beaten-grid';
+    beatenGrid.style.display = 'none';
+    beatenGrid.innerHTML = '<div class="re-beaten-empty">Loading...</div>';
+    nativeGrid.parentNode.insertBefore(beatenGrid, nativeGrid.nextSibling);
+
+    // Count mastered from native section
+    var masteredBadges = nativeGrid.querySelectorAll('.goldimage');
+    var completedBadges = nativeGrid.querySelectorAll('.badgeimg.siteawards');
+    var masteredCount = masteredBadges.length + completedBadges.length;
+    var masteredCountEl = document.getElementById('re-mastered-count');
+    if (masteredCountEl) masteredCountEl.textContent = String(masteredCount);
+
+    // Tab switching
+    masteredTab.addEventListener('click', function () {
+      masteredTab.classList.add('active');
+      beatenTab.classList.remove('active');
+      nativeGrid.style.display = '';
+      beatenGrid.style.display = 'none';
+    });
+
+    beatenTab.addEventListener('click', function () {
+      beatenTab.classList.add('active');
+      masteredTab.classList.remove('active');
+      nativeGrid.style.display = 'none';
+      beatenGrid.style.display = '';
+    });
+
+    // Fetch beaten games from API
+    var awardsUrl = 'https://retroachievements.org/API/API_GetUserAwards.php'
+      + '?u=' + encodeURIComponent(targetUser)
+      + '&y=' + encodeURIComponent(apiKey);
+
+    gmFetch(awardsUrl, 15000).then(function (resp) {
+      var data = JSON.parse(resp.responseText);
+      var awards = data.VisibleUserAwards || [];
+
+      // Filter beaten awards (exclude events)
+      var beatenAwards = awards.filter(function (a) {
+        return (a.AwardType || '').toLowerCase() === 'game beaten'
+          && a.ConsoleName !== 'Events';
+      });
+
+      // Also update mastered count from API for accuracy
+      var masteredAwards = awards.filter(function (a) {
+        var aType = (a.AwardType || '').toLowerCase();
+        return (aType === 'mastery/completion' || aType === 'mastery')
+          && a.ConsoleName !== 'Events';
+      });
+      if (masteredCountEl) masteredCountEl.textContent = String(masteredAwards.length);
+
+      var beatenCountEl = document.getElementById('re-beaten-count');
+      if (beatenCountEl) beatenCountEl.textContent = String(beatenAwards.length);
+
+      // Render beaten badges
+      beatenGrid.innerHTML = '';
+      if (beatenAwards.length === 0) {
+        beatenGrid.innerHTML = '<div class="re-beaten-empty">No beaten games yet.</div>';
+        return;
+      }
+
+      beatenAwards.forEach(function (award) {
+        var gameId = award.AwardData;
+        var title = award.Title || '';
+        var consoleName = award.ConsoleName || '';
+        var imageIcon = award.ImageIcon || '';
+        var isHardcore = parseInt(award.AwardDataExtra, 10) === 1;
+        var awardDate = '';
+        if (award.AwardedAt) {
+          try { awardDate = new Date(award.AwardedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); } catch(e) {}
+        }
+
+        var imgSrc = imageIcon ? 'https://retroachievements.org' + imageIcon : '';
+        var imgClass = isHardcore ? 'goldimage' : 'softcore';
+        var tooltip = escapeHtml(title) + ' (' + escapeHtml(consoleName) + ')'
+          + '\nBeaten' + (isHardcore ? ' (hardcore)' : ' (softcore)')
+          + (awardDate ? ' on ' + awardDate : '');
+
+        var wrapper = document.createElement('div');
+        wrapper.className = 're-beaten-badge';
+        wrapper.setAttribute('data-gameid', gameId);
+        wrapper.innerHTML = '<a href="/game/' + gameId + '" title="' + escapeHtml(tooltip) + '">'
+          + '<img src="' + escapeHtml(imgSrc) + '" class="' + imgClass + '" width="48" height="48" loading="lazy" decoding="async" />'
+          + '</a>';
+        beatenGrid.appendChild(wrapper);
+      });
+
+    }).catch(function (err) {
+      beatenGrid.innerHTML = '<div class="re-beaten-empty">Failed to load beaten games.</div>';
+      log.warn('Game Awards Beaten fetch failed: ' + err.message);
+    });
+  }
+
+  // =========================================
   //   User Wall — Linkify URLs + YouTube Embed
   // =========================================
   function initWallLinkify() {
@@ -5542,6 +5768,7 @@
     _lastInitUrl = url;
     init();
     initUserPagination();
+    initGameAwardsBeaten();
     initWallLinkify();
     initWallTranslation();
   }

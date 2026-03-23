@@ -14,7 +14,7 @@
   <a href="https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js">
     <img src="https://img.shields.io/badge/Install-Tampermonkey-green?logo=tampermonkey" alt="Install">
   </a>
-  <img src="https://img.shields.io/badge/version-2.6.5-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.7.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
 </p>
 
@@ -135,6 +135,11 @@ Injected on user profile pages (`/user/{username}`) with 6 modules:
 ---
 
 ## 📋 Changelog
+
+### v2.7.0
+- Game Awards: new Mastered/Beaten tabs in sidebar section
+- Game Awards: Beaten tab shows all beaten games with trophy icon and count
+- Game Awards: hardcore badges shown in gold, softcore slightly dimmed
 
 ### v2.6.5
 - Rarest Achievements: items are now clickable links to `/achievement/{id}`
