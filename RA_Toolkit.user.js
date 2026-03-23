@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.7.0
+// @version      2.7.1
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -208,7 +208,7 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.7.0";
+  var CURRENT_VERSION = "2.7.1";
 
   var CHANGELOG = [
     { version: "2.7.0", changes: [
@@ -5102,6 +5102,13 @@
     var nativeCounters = heading.querySelector('.grow');
     var nativeCounterSpans = heading.querySelectorAll('.cursor-help');
 
+    // Save reference to native heading counters for tab switching
+    var headingCountersContainer = heading;
+    var originalCountersHtml = '';
+    // Capture all counter divs (mastered + completed)
+    var counterDivs = heading.querySelectorAll('.cursor-help');
+    counterDivs.forEach(function (el) { originalCountersHtml += el.outerHTML; });
+
     // Inject styles
     if (!document.getElementById('re-game-awards-style')) {
       var style = document.createElement('style');
@@ -5147,30 +5154,6 @@
         .re-awards-tab.active .re-tab-count {
           background: rgba(255,255,255,0.2);
         }
-        .re-beaten-grid {
-          display: grid;
-          place-content: center;
-          gap: 8px;
-          grid-template-columns: repeat(auto-fill, minmax(52px, 52px));
-          background: var(--bg-embed, #18181b);
-          border-radius: 8px;
-          padding: 8px;
-        }
-        .re-beaten-badge {
-          position: relative;
-          display: inline-block;
-        }
-        .re-beaten-badge img {
-          width: 48px;
-          height: 48px;
-          border-radius: 4px;
-        }
-        .re-beaten-badge img.goldimage {
-          filter: none;
-        }
-        .re-beaten-badge img.softcore {
-          filter: grayscale(0.3) brightness(0.85);
-        }
         .re-beaten-empty {
           grid-column: 1 / -1;
           text-align: center;
@@ -5201,9 +5184,9 @@
     // Insert tabs before the grid
     nativeGrid.parentNode.insertBefore(tabsDiv, nativeGrid);
 
-    // Create beaten grid (hidden by default)
+    // Create beaten grid (hidden by default) — same classes as native grid
     var beatenGrid = document.createElement('div');
-    beatenGrid.className = 're-beaten-grid';
+    beatenGrid.className = 'component w-full place-content-center bg-embed gap-2 grid grid-cols-[repeat(auto-fill,minmax(52px,52px))] xl:rounded xl:py-2';
     beatenGrid.style.display = 'none';
     beatenGrid.innerHTML = '<div class="re-beaten-empty">Loading...</div>';
     nativeGrid.parentNode.insertBefore(beatenGrid, nativeGrid.nextSibling);
@@ -5215,12 +5198,57 @@
     var masteredCountEl = document.getElementById('re-mastered-count');
     if (masteredCountEl) masteredCountEl.textContent = String(masteredCount);
 
+    // Variables to hold counts for heading update
+    var beatenTotalCount = 0;
+    var masteredTotalCount = masteredCount;
+    var beatenHcCount = 0;
+    var beatenScCount = 0;
+
+    function updateHeadingCounters(mode) {
+      // Remove existing counter divs from heading
+      var existing = headingCountersContainer.querySelectorAll('.cursor-help');
+      existing.forEach(function (el) { el.remove(); });
+
+      if (mode === 'mastered') {
+        // Restore original mastered/completed counters
+        var temp = document.createElement('div');
+        temp.innerHTML = originalCountersHtml;
+        while (temp.firstChild) {
+          headingCountersContainer.appendChild(temp.firstChild);
+        }
+      } else {
+        // Show beaten counters
+        if (beatenHcCount > 0) {
+          var hcDiv = document.createElement('div');
+          hcDiv.className = 'cursor-help flex gap-x-1 text-sm';
+          hcDiv.title = beatenHcCount + (beatenHcCount === 1 ? ' game' : ' games') + ' beaten';
+          hcDiv.innerHTML = '<div class="text-2xs">🏆</div><div class="numitems">' + beatenHcCount + '</div>';
+          headingCountersContainer.appendChild(hcDiv);
+        }
+        if (beatenScCount > 0) {
+          var scDiv = document.createElement('div');
+          scDiv.className = 'cursor-help flex gap-x-1 text-sm';
+          scDiv.title = beatenScCount + (beatenScCount === 1 ? ' game' : ' games') + ' beaten (softcore)';
+          scDiv.innerHTML = '<div class="text-2xs">🎖️</div><div class="numitems">' + beatenScCount + '</div>';
+          headingCountersContainer.appendChild(scDiv);
+        }
+        if (beatenHcCount === 0 && beatenScCount === 0) {
+          var emptyDiv = document.createElement('div');
+          emptyDiv.className = 'cursor-help flex gap-x-1 text-sm';
+          emptyDiv.title = '0 games beaten';
+          emptyDiv.innerHTML = '<div class="text-2xs">🏆</div><div class="numitems">0</div>';
+          headingCountersContainer.appendChild(emptyDiv);
+        }
+      }
+    }
+
     // Tab switching
     masteredTab.addEventListener('click', function () {
       masteredTab.classList.add('active');
       beatenTab.classList.remove('active');
       nativeGrid.style.display = '';
       beatenGrid.style.display = 'none';
+      updateHeadingCounters('mastered');
     });
 
     beatenTab.addEventListener('click', function () {
@@ -5228,6 +5256,7 @@
       masteredTab.classList.remove('active');
       nativeGrid.style.display = 'none';
       beatenGrid.style.display = '';
+      updateHeadingCounters('beaten');
     });
 
     // Fetch beaten games from API
@@ -5251,7 +5280,13 @@
         return (aType === 'mastery/completion' || aType === 'mastery')
           && a.ConsoleName !== 'Events';
       });
+      masteredTotalCount = masteredAwards.length;
       if (masteredCountEl) masteredCountEl.textContent = String(masteredAwards.length);
+
+      // Count beaten by mode
+      beatenHcCount = beatenAwards.filter(function (a) { return parseInt(a.AwardDataExtra, 10) === 1; }).length;
+      beatenScCount = beatenAwards.filter(function (a) { return parseInt(a.AwardDataExtra, 10) !== 1; }).length;
+      beatenTotalCount = beatenAwards.length;
 
       var beatenCountEl = document.getElementById('re-beaten-count');
       if (beatenCountEl) beatenCountEl.textContent = String(beatenAwards.length);
@@ -5265,29 +5300,31 @@
 
       beatenAwards.forEach(function (award) {
         var gameId = award.AwardData;
-        var title = award.Title || '';
-        var consoleName = award.ConsoleName || '';
         var imageIcon = award.ImageIcon || '';
         var isHardcore = parseInt(award.AwardDataExtra, 10) === 1;
-        var awardDate = '';
-        if (award.AwardedAt) {
-          try { awardDate = new Date(award.AwardedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); } catch(e) {}
-        }
+        var imgSrc = imageIcon ? 'https://media.retroachievements.org' + imageIcon : '';
+        var imgClass = isHardcore ? 'goldimage' : 'badgeimg siteawards';
 
-        var imgSrc = imageIcon ? 'https://retroachievements.org' + imageIcon : '';
-        var imgClass = isHardcore ? 'goldimage' : 'softcore';
-        var tooltip = escapeHtml(title) + ' (' + escapeHtml(consoleName) + ')'
-          + '\nBeaten' + (isHardcore ? ' (hardcore)' : ' (softcore)')
-          + (awardDate ? ' on ' + awardDate : '');
-
-        var wrapper = document.createElement('div');
-        wrapper.className = 're-beaten-badge';
-        wrapper.setAttribute('data-gameid', gameId);
-        wrapper.innerHTML = '<a href="/game/' + gameId + '" title="' + escapeHtml(tooltip) + '">'
-          + '<img src="' + escapeHtml(imgSrc) + '" class="' + imgClass + '" width="48" height="48" loading="lazy" decoding="async" />'
+        // Use same structure as native mastered badges with Alpine.js tooltip
+        var wrapper = document.createElement('span');
+        wrapper.className = 'inline';
+        wrapper.setAttribute('x-data', "tooltipComponent($el, { dynamicType: 'game', dynamicId: '" + gameId + "', dynamicContext: '" + escapeHtml(targetUser) + "' })");
+        wrapper.setAttribute('@mouseover', 'showTooltip($event)');
+        wrapper.setAttribute('@mouseleave', 'hideTooltip');
+        wrapper.setAttribute('@mousemove', 'trackMouseMovement($event)');
+        wrapper.innerHTML = '<a class="inline-block" href="/game/' + gameId + '">'
+          + '<img loading="lazy" decoding="async" width="48" height="48"'
+          + ' src="' + escapeHtml(imgSrc) + '"'
+          + ' alt="" class="' + imgClass + '">'
           + '</a>';
+
         beatenGrid.appendChild(wrapper);
       });
+
+      // Initialize Alpine.js on the dynamically created tooltip elements
+      if (window.Alpine && Alpine.initTree) {
+        Alpine.initTree(beatenGrid);
+      }
 
     }).catch(function (err) {
       beatenGrid.innerHTML = '<div class="re-beaten-empty">Failed to load beaten games.</div>';

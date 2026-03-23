@@ -14,7 +14,7 @@
   <a href="https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js">
     <img src="https://img.shields.io/badge/Install-Tampermonkey-green?logo=tampermonkey" alt="Install">
   </a>
-  <img src="https://img.shields.io/badge/version-2.7.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.7.1-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
 </p>
 
@@ -135,6 +135,11 @@ Injected on user profile pages (`/user/{username}`) with 6 modules:
 ---
 
 ## 📋 Changelog
+
+### v2.7.1
+- Game Awards: beaten badges now use native rich tooltip (same as mastered)
+- Game Awards: heading icon and total count update when switching Mastered/Beaten tabs
+- Game Awards: beaten grid uses native CSS classes for consistent styling
 
 ### v2.7.0
 - Game Awards: new Mastered/Beaten tabs in sidebar section
