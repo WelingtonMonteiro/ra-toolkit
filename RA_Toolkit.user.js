@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.7.1
+// @version      2.7.2
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -208,9 +208,12 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.7.1";
+  var CURRENT_VERSION = "2.7.2";
 
   var CHANGELOG = [
+    { version: "2.7.2", changes: [
+      "Header: restored Achievements dropdown menu (Easy Achievements, Hardest Achievements)"
+    ]},
     { version: "2.7.0", changes: [
       "Game Awards: new Mastered/Beaten tabs in sidebar section",
       "Game Awards: Beaten tab shows all beaten games with trophy icon and count",
@@ -447,7 +450,8 @@
                  "enhanced-translate-style", "enhanced-pagination", "enhanced-pagination-style",
                  "enhanced-guide-link", "enhanced-changelog-overlay", "enhanced-rarity-style",
                  "enhanced-collapse-style", "enhanced-wall-linkify-style",
-                 "re-game-awards-style", "re-game-awards-tabs"];
+                 "re-game-awards-style", "re-game-awards-tabs",
+                 "re-achievements-dropdown"];
     ids.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.remove();
@@ -5333,6 +5337,70 @@
   }
 
   // =========================================
+  //   Achievements Nav Links (restored from removed header menu)
+  // =========================================
+  function initAchievementNavLinks() {
+    // Already injected?
+    if (document.getElementById('re-achievements-dropdown')) return;
+
+    // Find all nav-item dropdowns in the navbar
+    var navItems = document.querySelectorAll('.dropdown.nav-item');
+    if (!navItems.length) return;
+
+    // Find the "Games" dropdown by checking trigger text
+    var gamesDropdown = null;
+    for (var i = 0; i < navItems.length; i++) {
+      var trigger = navItems[i].querySelector('.nav-link');
+      if (trigger && /\bgames?\b/i.test(trigger.textContent)) {
+        gamesDropdown = navItems[i];
+        break;
+      }
+    }
+    if (!gamesDropdown) return;
+
+    // Build the Achievements dropdown with same structure as native dropdowns
+    var achDropdown = document.createElement('div');
+    achDropdown.id = 're-achievements-dropdown';
+    achDropdown.className = 'dropdown nav-item';
+
+    var btn = document.createElement('button');
+    btn.className = 'nav-link';
+    btn.setAttribute('role', 'button');
+    btn.setAttribute('aria-haspopup', 'true');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.title = 'Achievements';
+    btn.innerHTML = '<span style="font-size:0.85em;">🏆</span> <span class="ml-1 hidden sm:inline-block">Achievements</span>';
+
+    var menu = document.createElement('div');
+    menu.className = 'dropdown-menu';
+
+    var links = [
+      { href: '/achievementList.php', text: 'All Achievements' },
+      { href: '/achievementList.php?s=4&p=2', text: '🟢 Easy Achievements' },
+      { href: '/achievementList.php?s=14&p=2', text: '🔴 Hardest Achievements' }
+    ];
+
+    links.forEach(function (item, idx) {
+      if (idx === 1) {
+        var div = document.createElement('div');
+        div.className = 'dropdown-divider';
+        menu.appendChild(div);
+      }
+      var a = document.createElement('a');
+      a.className = 'dropdown-item';
+      a.href = item.href;
+      a.textContent = item.text;
+      menu.appendChild(a);
+    });
+
+    achDropdown.appendChild(btn);
+    achDropdown.appendChild(menu);
+
+    // Insert after the Games dropdown
+    gamesDropdown.parentNode.insertBefore(achDropdown, gamesDropdown.nextSibling);
+  }
+
+  // =========================================
   //   User Wall — Linkify URLs + YouTube Embed
   // =========================================
   function initWallLinkify() {
@@ -5804,6 +5872,7 @@
     }
     _lastInitUrl = url;
     init();
+    initAchievementNavLinks();
     initUserPagination();
     initGameAwardsBeaten();
     initWallLinkify();
