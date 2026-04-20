@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.8.0
+// @version      2.8.1
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -33,7 +33,7 @@
 (function () {
   "use strict";
 
-  console.log('[RA Toolkit] ✅ Script loaded — v2.8.0 — ' + location.href);
+  console.log('[RA Toolkit] ✅ Script loaded — v2.8.1 — ' + location.href);
 
   // =========================================
   //       Inertia Props Helper
@@ -210,9 +210,12 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.8.0";
+  var CURRENT_VERSION = "2.8.1";
 
   var CHANGELOG = [
+    { version: "2.8.1", changes: [
+      "Docs: added complete User Guide wiki with 18 pages covering all features"
+    ]},
     { version: "2.8.0", changes: [
       "Games Page: new 'Most Mastered' tab on /games — browse games ranked by most players",
       "Games Page: card grid with rank, players, beaten count, achievements, and system tag",
@@ -2570,7 +2573,7 @@
         function buildDownloadPageUrl(href) {
           // href like /Console_ROMs/Game_Name/151200 — link to the download page
           var clean = href.replace(/\/+$/, '');
-          return mainDir + clean + '-download';
+          return mainDir + clean;
         }
 
         items.forEach(function (el) {
