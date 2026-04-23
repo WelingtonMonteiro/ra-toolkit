@@ -10,6 +10,8 @@
 2. A **tab bar** appears above the game table
 3. Click **"👑 Most Mastered"** to switch views
 
+<img width="607" height="310" alt="image" src="images/cdbe8da0-20f0-4241-af89-9ec3c843b7b4.png" />
+
 ## Tabs
 
 | Tab | Description |
@@ -20,6 +22,7 @@
 ## Most Mastered view
 
 Games are displayed as cards in a grid, sorted by total player count (descending). Each card shows:
+<img width="1299" height="608" alt="image" src="images/5f298544-8043-41ca-bacb-f41d3ab7683e.png" />
 
 | Element | Description |
 |---------|-------------|

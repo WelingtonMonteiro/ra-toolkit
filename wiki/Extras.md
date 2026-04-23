@@ -4,10 +4,14 @@
 
 When enabled, the game's in-game screenshot is used as a **blurred background** behind the page content.
 
+<img width="896" height="602" alt="image" src="images/09cba38e-26a7-4e94-a89d-a8fd71caa771.png" />
+
 - Combined with the **glass effect**, it gives game pages a unique visual style
 - Toggle both options in [Settings](Settings-Panel):
   - **Enable custom game page background** (default: On)
   - **Enable glass background effect** (default: On)
+
+<img width="1786" height="806" alt="image" src="images/b906b7db-0229-4ae5-bbe3-c3bf2f052223.png" />
 
 ## Accent Color
 

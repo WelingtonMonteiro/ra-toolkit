@@ -2,6 +2,9 @@
 
 > **Where:** Replaces the native "User Stats" section on user profile pages (`/user/{username}`)
 
+<img width="1047" height="574" alt="image" src="images/3e366220-e4f1-4544-8f6c-11284a029269.png" />
+
+
 ## What it does
 
 The native RA "User Stats" section is replaced with a modern card-style layout with icons and colors, divided into 3 areas.
@@ -9,6 +12,9 @@ The native RA "User Stats" section is replaced with a modern card-style layout w
 ## Primary Stats (6 metric cards)
 
 Displayed in a 3-column grid:
+
+<img width="1070" height="282" alt="image" src="images/b52e314c-7e22-4be5-bd0f-077cef9693a5.png" />
+
 
 | Card | Icon | Description |
 |------|:----:|-------------|
@@ -23,6 +29,9 @@ Displayed in a 3-column grid:
 
 Only shown if the player has recent activity data:
 
+<img width="1052" height="150" alt="image" src="images/4f9a02f0-692d-4656-ba55-e97692f71d89.png" />
+
+
 | Card | Description |
 |------|-------------|
 | **Points (7 days)** | Points earned in the last week |
@@ -33,6 +42,8 @@ Only shown if the player has recent activity data:
 ## Softcore Stats (3 cards)
 
 Only shown if the player has softcore activity. Uses dimmer styling:
+
+<img width="1032" height="167" alt="image" src="images/aa1f2193-b48e-4713-9549-2f58dcbd1a93.png" />
 
 | Card | Description |
 |------|-------------|

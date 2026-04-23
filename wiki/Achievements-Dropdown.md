@@ -6,6 +6,8 @@
 
 Adds an **"Achievements"** dropdown menu to the header navigation, next to the "Games" dropdown. This restores a navigation option that was removed in a previous RA site update.
 
+<img width="701" height="428" alt="image" src="images/e53204a7-cb15-423c-b8d1-f854853601c9.png" />
+
 ## Menu items
 
 | Item | Link | Description |

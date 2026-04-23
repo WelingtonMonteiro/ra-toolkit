@@ -7,6 +7,9 @@
 
 ## Toggles (on/off switches)
 
+<img width="948" height="770" alt="image" src="images/1a3b14dd-a148-4161-bcc9-3601153d0eaa.png" />
+
+
 | Toggle | Default | What it does |
 |--------|:-------:|-------------|
 | **Enable ROMs search** | ✅ On | Shows ROM download links on game pages |
@@ -23,6 +26,9 @@
 
 ## Other controls
 
+<img width="955" height="217" alt="image" src="images/daaa5115-6811-41a2-88b6-d737f4da2af2.png" />
+
+
 | Control | Default | What it does |
 |---------|---------|-------------|
 | **Translation language** (dropdown) | `pt-BR` | Choose from: Portuguese, Spanish, French, German, Italian, Japanese, Korean, Chinese, Russian, Arabic |
@@ -31,6 +37,8 @@
 | **Reset** (button) | — | Resets accent color to the default blue |
 
 ## Saving changes
+
+<img width="923" height="431" alt="image" src="images/8536811c-c14b-42b9-874d-8e15ad3aecb5.png" />
 
 Click the **"Atualizar"** button at the bottom of the card.
 

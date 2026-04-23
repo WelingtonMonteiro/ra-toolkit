@@ -46,11 +46,16 @@ Many features require a **RetroAchievements Web API key**. Without it, features 
 2. Go to **Settings → Keys** (or visit `retroachievements.org/settings`)
 3. Copy your **Web API Key**
 
+<img width="893" height="323" alt="image" src="images/5c796a89-cffb-4185-925a-b92912afa708.png" />
+
 ### How to paste it in RA Toolkit
 
 4. On the same Settings page, scroll down to the **RA Toolkit** card
 5. Paste the key in the **"RA API Key"** field
 6. Click **"Atualizar"** (Save) — the page will reload
+
+<img width="703" height="784" alt="image" src="images/12d415d3-6378-4348-b3b7-a044a1c3fa64.png" />
+
 
 ### Which features need the API key?
 

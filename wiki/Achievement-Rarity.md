@@ -12,6 +12,8 @@ Each achievement card gets:
 - A **colored left border** (3px) indicating rarity
 - A **rarity label** badge after the title (e.g., "🔵 Rare")
 
+<img width="929" height="776" alt="image" src="images/c5483292-75df-4d91-bf27-cdd1b31a2a1e.png" />
+
 ## On profile pages
 
 Achievement badge images in the paginated "Last Games Played" section get a **colored border** matching their rarity tier.
@@ -34,3 +36,6 @@ The rarity indicator works on game pages in **any language** — it uses languag
 ## Toggle
 
 Enable or disable in **[Settings](Settings-Panel) → Achievement rarity indicator**.
+
+<img width="951" height="352" alt="image" src="images/4d25d4c3-db4b-4d5c-a2a8-dfdd14cbee80.png" />
+
