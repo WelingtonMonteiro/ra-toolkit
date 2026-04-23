@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.8.1
+// @version      2.8.2
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -33,7 +33,7 @@
 (function () {
   "use strict";
 
-  console.log('[RA Toolkit] ✅ Script loaded — v2.8.1 — ' + location.href);
+  console.log('[RA Toolkit] ✅ Script loaded — v2.8.2 — ' + location.href);
 
   // =========================================
   //       Inertia Props Helper
@@ -210,9 +210,13 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.8.1";
+  var CURRENT_VERSION = "2.8.2";
 
   var CHANGELOG = [
+    { version: "2.8.2", changes: [
+      "Achievement pages: linkify URLs and embed YouTube/images in achievement comments",
+      "Achievement pages: added Translate button for achievement comments"
+    ]},
     { version: "2.8.1", changes: [
       "Docs: added complete User Guide wiki with 18 pages covering all features"
     ]},
@@ -5644,10 +5648,12 @@
   }
 
   // =========================================
-  //   User Wall — Linkify URLs + YouTube Embed
+  //   Comments (User Wall + Achievement Pages) — Linkify + Media Embed
   // =========================================
   function initWallLinkify() {
-    if (!/^\/user\/[^\/]+(\/(comments)?)?$/i.test(location.pathname)) return;
+    var isUserCommentsPage = /^\/user\/[^\/]+(\/(comments)?)?$/i.test(location.pathname);
+    var isAchievementPage = /^\/achievement\/\d+(\/.*)?$/i.test(location.pathname);
+    if (!isUserCommentsPage && !isAchievementPage) return;
 
     // Inject CSS once
     if (!document.getElementById('enhanced-wall-linkify-style')) {
@@ -5862,15 +5868,16 @@
       || document.body;
     linkifyObserver.observe(container, { childList: true, subtree: true });
 
-    log.info('Wall linkify initialized');
+    log.info('Comments linkify initialized');
   }
 
   // =========================================
-  //   User Wall Comment Translation
+  //   Comment Translation (User Wall + Achievement Pages)
   // =========================================
   async function initWallTranslation() {
-    // Run on user profile pages and user comments pages
-    if (!/^\/user\/[^\/]+(\/(comments)?)?$/i.test(location.pathname)) return;
+    var isUserCommentsPage = /^\/user\/[^\/]+(\/(comments)?)?$/i.test(location.pathname);
+    var isAchievementPage = /^\/achievement\/\d+(\/.*)?$/i.test(location.pathname);
+    if (!isUserCommentsPage && !isAchievementPage) return;
 
     var wallLang = await GM_getValue("translateLang", "pt-BR");
 
@@ -6060,7 +6067,7 @@
       || document.body;
     wallObserver.observe(wallContainer, { childList: true, subtree: true });
 
-    log.info('Wall translation initialized');
+    log.info('Comment translation initialized');
   }
 
   // =========================================

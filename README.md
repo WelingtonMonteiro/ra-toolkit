@@ -14,7 +14,7 @@
   <a href="https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js">
     <img src="https://img.shields.io/badge/Install-Tampermonkey-green?logo=tampermonkey" alt="Install">
   </a>
-  <img src="https://img.shields.io/badge/version-2.8.1-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-2.8.2-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
 </p>
 
@@ -117,6 +117,11 @@ Injected on user profile pages (`/user/{username}`) with 6 modules:
 - **Linkify** — plain text URLs in comments become clickable links (opens in new tab)
 - **YouTube embed** — YouTube links in wall comments show an inline mini video player
 - **Image preview** — image links (png, jpg, gif, webp, etc.) show inline preview, click to open
+- Also works on **achievement comments** pages (`/achievement/{id}`)
+
+### 🌐 Achievement Comment Translation
+- Translate button now also appears in **achievement comments** (`/achievement/{id}`)
+- Uses the same language selected in settings and the same daily rate limit
 
 ### 📄 Profile Pagination
 - Paginated "Last Games Played" with numbered buttons
