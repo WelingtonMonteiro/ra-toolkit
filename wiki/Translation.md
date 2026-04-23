@@ -1,6 +1,6 @@
-# 🌐 Achievement & Wall Translation
+# 🌐 Achievement & Comment Translation
 
-> **Where:** Game pages (achievement cards) and user profile wall comments
+> **Where:** Game pages (achievement cards), user profile wall comments, and achievement comment pages (`/achievement/{id}`)
 
 ## Translating achievements on a game page
 
@@ -16,6 +16,12 @@
 1. Go to any user profile (`/user/{username}`) or their comments page
 2. Each wall comment has a **"🌐 Translate"** button
 3. Click to translate, click again to see the original
+
+## Translating achievement comments
+
+1. Open any achievement page (example: `/achievement/309`)
+2. In the comments section, each comment has a **"🌐 Translate"** button
+3. Click to translate, click **"🌐 Original"** to switch back
 
 ## Translation language
 

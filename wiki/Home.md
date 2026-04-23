@@ -37,7 +37,8 @@ Welcome to the RA Toolkit Wiki! Here you'll find step-by-step instructions for e
 - **[Speedrun.com Integration](Speedrun-Integration)** — World records and gameplay videos
 
 ### Site-Wide Features
-- **[User Wall Enhancements](Wall-Enhancements)** — Linkify, YouTube embeds, image previews
+- **[User Wall Enhancements](Wall-Enhancements)** — Linkify, YouTube embeds, image previews (also on achievement comments)
+- **[Achievement & Comment Translation](Translation)** — Translate achievements, wall comments, and achievement comments
 - **[Most Mastered Tab](Most-Mastered)** — Browse games ranked by player count
 - **[Achievements Dropdown](Achievements-Dropdown)** — Restored navigation menu
 - **[Extras](Extras)** — Custom backgrounds, accent colors, mobile support
@@ -59,7 +60,7 @@ Welcome to the RA Toolkit Wiki! Here you'll find step-by-step instructions for e
 | Activity Timeline | ✅ Yes |
 | Profile Pagination (page 2+) | ✅ Yes |
 | Game Awards (Beaten tab) | ✅ Yes |
-| Translation | No |
+| Translation (cards + comments) | No |
 | Speedrun.com stats | No |
 | Rarity Indicator | No |
 | Wall Enhancements | No |

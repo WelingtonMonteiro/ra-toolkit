@@ -1,10 +1,10 @@
-# 💬 User Wall Enhancements
+# 💬 User Wall & Comment Enhancements
 
-> **Where:** User profile pages and comments pages (`/user/{name}`, `/user/{name}/comments`)
+> **Where:** User profile pages, user comments pages, and achievement comments pages (`/user/{name}`, `/user/{name}/comments`, `/achievement/{id}`)
 
 ## 1. URL Linkify
 
-Plain text URLs posted in wall comments are automatically converted into **clickable links**.
+Plain text URLs posted in comments are automatically converted into **clickable links**.
 
 - Links are highlighted in your [accent color](Settings-Panel)
 - Links open in a **new tab** (`target="_blank"`)
@@ -23,7 +23,7 @@ Check out [https://retroachievements.org/game/1] for more info
 
 ## 2. YouTube Embed
 
-YouTube links in wall comments automatically show an **inline video player** below the comment.
+YouTube links in comments automatically show an **inline video player** below the comment.
 
 **Supported URL formats:**
 - `https://www.youtube.com/watch?v=...`

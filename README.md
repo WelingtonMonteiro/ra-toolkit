@@ -20,6 +20,22 @@
 
 ---
 
+## 📚 Documentation
+
+The complete step-by-step documentation now lives in the GitHub Wiki:
+
+👉 **https://github.com/WelingtonMonteiro/ra-toolkit/wiki**
+
+Quick links:
+- [Home](https://github.com/WelingtonMonteiro/ra-toolkit/wiki)
+- [Getting Started](https://github.com/WelingtonMonteiro/ra-toolkit/wiki/Getting-Started)
+- [ROM Search](https://github.com/WelingtonMonteiro/ra-toolkit/wiki/ROM-Search)
+- [Activity Timeline](https://github.com/WelingtonMonteiro/ra-toolkit/wiki/Activity-Timeline)
+- [Wall Enhancements](https://github.com/WelingtonMonteiro/ra-toolkit/wiki/Wall-Enhancements)
+- [Translation](https://github.com/WelingtonMonteiro/ra-toolkit/wiki/Translation)
+
+---
+
 ## 📥 Installation
 
 ### Step 1 — Install Tampermonkey
@@ -80,7 +96,7 @@ Tampermonkey will detect the `.user.js` file automatically and show an install s
 
 ### 🌐 Achievement & Wall Translation
 - Per-card **Translate** button using MyMemory API (free tier)
-- Wall comment translation on user profile pages
+- Comment translation on user profile pages and achievement pages (`/achievement/{id}`)
 - Language selector in settings panel
 - Daily rate limiter (5000 chars/day) with persistent counter
 - Auto-disable for texts exceeding 500-char API query limit
