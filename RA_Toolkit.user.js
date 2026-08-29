@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.8.2
+// @version      2.9.0
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -33,7 +33,7 @@
 (function () {
   "use strict";
 
-  console.log('[RA Toolkit] ✅ Script loaded — v2.8.2 — ' + location.href);
+  console.log('[RA Toolkit] ✅ Script loaded — v2.9.0 — ' + location.href);
 
   // =========================================
   //       Inertia Props Helper
@@ -67,9 +67,14 @@
   }
 
   function escapeHtml(str) {
-    var div = document.createElement("div");
-    div.appendChild(document.createTextNode(str));
-    return div.innerHTML;
+    // Escapes quotes too: scraped ROM/game names are interpolated into
+    // attributes (title=, value=), which a text-node round-trip leaves open.
+    return String(str === null || str === undefined ? "" : str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
   // =========================================
@@ -210,9 +215,15 @@
   // =========================================
   //   Changelog Popup (after version update)
   // =========================================
-  var CURRENT_VERSION = "2.8.2";
+  var CURRENT_VERSION = "2.9.0";
 
   var CHANGELOG = [
+    { version: "2.9.0", changes: [
+      "Settings: restored the RA Toolkit panel on the new tabbed /settings page",
+      "Settings: panel is re-attached when switching settings tabs",
+      "Game page: ROMs and Speedrun sections are re-attached if React re-renders the sidebar",
+      "User Stats: reads the renamed \"casual\" labels (RetroAchievements renamed softcore to casual)"
+    ]},
     { version: "2.8.2", changes: [
       "Achievement pages: linkify URLs and embed YouTube/images in achievement comments",
       "Achievement pages: added Translate button for achievement comments"
@@ -430,6 +441,68 @@
   }
 
   // =========================================
+  //     Settings Page Injection Helpers
+  // =========================================
+  // RAWeb renders /settings through AppLayout with `withSidebar={false}`, so
+  // `main` no longer carries the `with-sidebar` class, and the section cards
+  // now live inside Radix tab panels (Profile / Notifications / Account /
+  // Applications) instead of a flat flex column.
+  function findSettingsPanelHost(root) {
+    if (!root) return null;
+
+    // The host wraps every tab panel, so it survives tab switches.
+    var activePanel = root.querySelector('[role="tabpanel"][data-state="active"]');
+    if (activePanel && activePanel.parentElement) return activePanel.parentElement;
+
+    var anyPanel = root.querySelector('[role="tabpanel"]');
+    if (anyPanel && anyPanel.parentElement) return anyPanel.parentElement;
+
+    // Pre-tabs layout: a flat column of section cards.
+    var legacy = root.querySelector("div.flex.flex-col > div.flex.flex-col");
+    return legacy || root;
+  }
+
+  var _settingsHostObserver = null;
+
+  // Radix unmounts inactive tab panels, which reorders the host's children.
+  // Re-append the card whenever React drops it.
+  function keepSettingsCardAttached(host, card) {
+    if (_settingsHostObserver) _settingsHostObserver.disconnect();
+    if (!host || !card) return;
+
+    _settingsHostObserver = new MutationObserver(function () {
+      if (!host.isConnected) {
+        _settingsHostObserver.disconnect();
+        _settingsHostObserver = null;
+        return;
+      }
+      if (!host.contains(card)) host.appendChild(card);
+    });
+    _settingsHostObserver.observe(host, { childList: true });
+  }
+
+  var _sidebarObserver = null;
+
+  // The game page sidebar is re-rendered when the user switches achievement
+  // sets, and again when SSR falls back to a client-side render.
+  function keepSidebarSectionsAttached(target, nodes) {
+    if (_sidebarObserver) _sidebarObserver.disconnect();
+    if (!target) return;
+
+    _sidebarObserver = new MutationObserver(function () {
+      if (!target.isConnected) {
+        _sidebarObserver.disconnect();
+        _sidebarObserver = null;
+        return;
+      }
+      nodes.forEach(function (node) {
+        if (node && !target.contains(node)) target.appendChild(node);
+      });
+    });
+    _sidebarObserver.observe(target, { childList: true });
+  }
+
+  // =========================================
   //       Get Logged User
   // =========================================
   function getLoggedUser() {
@@ -459,6 +532,8 @@
   }
 
   function cleanup() {
+    if (_settingsHostObserver) { _settingsHostObserver.disconnect(); _settingsHostObserver = null; }
+    if (_sidebarObserver) { _sidebarObserver.disconnect(); _sidebarObserver = null; }
     const ids = ["enhanced-settings", "enhanced-romsdl", "enhanced-speedruncom",
                  "enhanced-custom-bg-style", "enhanced-glass-style", "enhanced-dl-style",
                  "enhanced-translate-style", "enhanced-pagination", "enhanced-pagination-style",
@@ -935,13 +1010,13 @@
   if (page === "/settings") {
     try {
       // Wait for the React settings page to render
-      const settingsContainer = await waitForElement("main.with-sidebar article");
-      // Find the flex container that holds all settings section cards
-      const flexContainer = settingsContainer.querySelector("div.flex.flex-col > div.flex.flex-col");
+      const settingsContainer = await waitForElement("main article");
+      // Find the element that hosts the settings tab panels
+      const panelHost = findSettingsPanelHost(settingsContainer);
 
-      if (flexContainer) {
+      if (panelHost && !document.getElementById("enhanced-settings")) {
         // Inject toggle switch styles (matching RAWeb BaseSwitch)
-        const switchStyle = document.createElement("style");
+        const switchStyle = document.getElementById("enhanced-switch-style") || document.createElement("style");
         switchStyle.id = "enhanced-switch-style";
         switchStyle.textContent = `
           .enhanced-switch {
@@ -1068,7 +1143,7 @@
 
         const enhancedDiv = document.createElement("div");
         enhancedDiv.id = "enhanced-settings";
-        enhancedDiv.className = "rounded-lg border border-embed-highlight bg-embed p-6 text-card-foreground shadow-sm w-full";
+        enhancedDiv.className = "w-full rounded-lg border border-embed-highlight bg-embed p-6 text-card-foreground shadow-xs light:border-neutral-300 light:bg-white";
         enhancedDiv.innerHTML = '<h3 class="pb-2 border-b-0 text-2xl font-semibold leading-none tracking-tight">RA Toolkit</h3>'
           + '<div class="flex flex-col gap-4" style="margin-top:1rem;">'
           + rowsHtml
@@ -1078,13 +1153,9 @@
           + '</div>'
           + '<div class="flex w-full justify-end" style="margin-top:1rem;"><button id="enhanced-settings-save" class="btn-base btn-base--default btn-base--size-default" type="button">Atualizar</button></div>';
 
-        // Insert after the second card in settings
-        const cards = flexContainer.children;
-        if (cards.length > 2) {
-          cards[2].after(enhancedDiv);
-        } else {
-          flexContainer.appendChild(enhancedDiv);
-        }
+        // Append below the active tab panel and survive tab switches.
+        panelHost.appendChild(enhancedDiv);
+        keepSettingsCardAttached(panelHost, enhancedDiv);
 
         // Bind all toggle switches
         settingsItems.forEach(function (item) {
@@ -1326,6 +1397,8 @@
         injectionTarget.appendChild(divRoms);
         injectionTarget.appendChild(divSpeedruncom);
       }
+
+      keepSidebarSectionsAttached(injectionTarget, [divRoms, divSpeedruncom]);
     }
 
     // =========================================
@@ -3340,7 +3413,15 @@
       if (Object.keys(s).length === 0) return;
 
       // Parse helpers
-      function val(key) { return s[key] || ''; }
+      function val(key) {
+        if (Array.isArray(key)) {
+          for (var ki = 0; ki < key.length; ki++) {
+            if (s[key[ki]]) return s[key[ki]];
+          }
+          return '';
+        }
+        return s[key] || '';
+      }
       function extractWeighted(raw) {
         var m = raw.match(/^([\d,.\s]+)\s*\((.+)\)$/);
         return m ? { main: m[1].trim(), weighted: m[2].trim() } : { main: raw, weighted: '' };
@@ -3407,20 +3488,21 @@
           + '</div>';
       });
 
-      // Softcore section
-      var softcoreDefs = [
-        { key: 'Points (softcore)', label: 'Points', icon: '⚡' },
-        { key: 'Softcore rank', label: 'Rank', icon: '🥈' },
-        { key: 'Achievements unlocked (softcore)', label: 'Achievements', icon: '🔓' },
+      // Casual section — RetroAchievements renamed "softcore" to "casual",
+      // so read the new labels first and fall back to the old ones.
+      var casualDefs = [
+        { key: ['Points (casual)', 'Points (softcore)'], label: 'Points', icon: '⚡' },
+        { key: ['Casual rank', 'Softcore rank'], label: 'Rank', icon: '🥈', isRank: true },
+        { key: ['Achievements unlocked (casual)', 'Achievements unlocked (softcore)'], label: 'Achievements', icon: '🔓' },
       ];
       var softcoreHtml = '';
       var hasSoftcore = false;
-      softcoreDefs.forEach(function (def) {
+      casualDefs.forEach(function (def) {
         var v = val(def.key);
         if (!v) return;
         hasSoftcore = true;
         var parsed = extractRankTotal(v);
-        if (def.key === 'Softcore rank' && parsed.total) {
+        if (def.isRank && parsed.total) {
           softcoreHtml += '<div class="metric-card">'
             + '<div class="card-top"><span class="metric-label">' + escapeHtml(def.label) + '</span><span class="card-icon">' + def.icon + '</span></div>'
             + '<div class="metric-value-sm" style="color:#737373;">' + escapeHtml(parsed.rank) + '</div>'
@@ -3447,7 +3529,7 @@
 
       if (hasSoftcore) {
         html += '<hr class="stats-divider">'
-          + '<div class="section-label">Softcore</div>'
+          + '<div class="section-label">Casual</div>'
           + '<div class="stats-grid-3">' + softcoreHtml + '</div>';
       }
 
@@ -4916,7 +4998,7 @@
         if (totalScore > 0) {
           pointsHtml = '<span class="font-bold">' + leftPoints + '</span> of <span class="font-bold">' + totalScore + '</span> points';
           if (exclusiveSoftcore > 0 && exclusiveSoftcore < hcScore) {
-            pointsHtml += ' (+<span class="font-bold">' + exclusiveSoftcore + '</span> softcore)';
+            pointsHtml += ' (+<span class="font-bold">' + exclusiveSoftcore + '</span> casual)';
           } else if (hcScore > 0 && exclusiveSoftcore > hcScore) {
             pointsHtml += ' (+<span class="font-bold">' + hcScore + '</span> hardcore)';
           }
@@ -4945,7 +5027,7 @@
         }
 
         // Award title labels
-        var awardTitles = { 'mastered':'Mastered', 'completed':'Completed', 'beaten-hardcore':'Beaten', 'beaten-softcore':'Beaten (softcore)' };
+        var awardTitles = { 'mastered':'Mastered', 'completed':'Completed', 'beaten-hardcore':'Beaten', 'beaten-softcore':'Beaten (casual)' };
         var awardTitle = awardTitles[awardKind] || 'Unfinished';
 
         // Progress bar HTML (reusing site's existing CSS classes)
@@ -5248,7 +5330,7 @@
         if (beatenScCount > 0) {
           var scDiv = document.createElement('div');
           scDiv.className = 'cursor-help flex gap-x-1 text-sm';
-          scDiv.title = beatenScCount + (beatenScCount === 1 ? ' game' : ' games') + ' beaten (softcore)';
+          scDiv.title = beatenScCount + (beatenScCount === 1 ? ' game' : ' games') + ' beaten (casual)';
           scDiv.innerHTML = '<div class="text-2xs">🎖️</div><div class="numitems">' + beatenScCount + '</div>';
           headingCountersContainer.appendChild(scDiv);
         }
@@ -5329,9 +5411,11 @@
         var wrapper = document.createElement('span');
         wrapper.className = 'inline';
         wrapper.setAttribute('x-data', "tooltipComponent($el, { dynamicType: 'game', dynamicId: '" + gameId + "', dynamicContext: '" + escapeHtml(targetUser) + "' })");
-        wrapper.setAttribute('@mouseover', 'showTooltip($event)');
-        wrapper.setAttribute('@mouseleave', 'hideTooltip');
-        wrapper.setAttribute('@mousemove', 'trackMouseMovement($event)');
+        // setAttribute() rejects "@mouseover" (not a valid XML Name), which
+        // aborted the whole render. Alpine's long form is a valid name.
+        wrapper.setAttribute('x-on:mouseover', 'showTooltip($event)');
+        wrapper.setAttribute('x-on:mouseleave', 'hideTooltip');
+        wrapper.setAttribute('x-on:mousemove', 'trackMouseMovement($event)');
         wrapper.innerHTML = '<a class="inline-block" href="/game/' + gameId + '">'
           + '<img loading="lazy" decoding="async" width="48" height="48"'
           + ' src="' + escapeHtml(imgSrc) + '"'
