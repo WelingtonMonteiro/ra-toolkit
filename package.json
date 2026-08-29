@@ -1,6 +1,6 @@
 {
   "name": "ra-toolkit",
-  "version": "2.9.0",
+  "version": "2.9.1",
   "private": true,
   "description": "Tests for the RA Toolkit userscript for RetroAchievements.org",
   "type": "module",
