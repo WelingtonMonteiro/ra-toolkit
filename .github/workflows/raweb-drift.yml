@@ -1,0 +1,40 @@
+name: RAWeb drift
+
+# The tests assert against frozen copies of RetroAchievements' markup, kept in
+# tests/fixtures/raweb-source.js. This job checks whether those copies are still
+# accurate by extracting them again from the live RAWeb repository.
+#
+# It runs on a schedule rather than on push: a failure means RetroAchievements
+# changed their markup, which should not block an unrelated pull request. Fix it
+# with `npm run raweb:sync` against a local checkout, then review the diff.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Mondays, 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  drift:
+    name: Frozen fixtures still match RAWeb
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out the current RAWeb source
+        uses: actions/checkout@v4
+        with:
+          repository: RetroAchievements/RAWeb
+          ref: master
+          path: RAWeb
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Compare the frozen fixtures against RAWeb
+        run: npm run test:drift

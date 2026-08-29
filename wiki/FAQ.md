@@ -48,7 +48,19 @@ Hover over the button to see the exact character count.
 
 ### The settings card doesn't appear
 
-Make sure you're on `retroachievements.org/settings` (the main settings page, not a sub-page). The RA Toolkit card is injected below the native settings cards.
+Make sure you're on `retroachievements.org/settings` (the main settings page, not a sub-page). The RA Toolkit card is injected at the bottom of the page, below the native settings cards — on any of the four tabs.
+
+If the card is missing on **v2.8.2 or older**, that's expected: RetroAchievements rebuilt the settings page as a tabbed layout and the old versions could no longer find where to inject. Update to **v2.9.0 or newer**.
+
+---
+
+### Everything stopped working after a RetroAchievements update
+
+RA Toolkit attaches to RetroAchievements' own markup, so a site redesign can break individual features. When that happens:
+
+1. Update the script (**Tampermonkey → Utilities → Check for userscript updates**) and hard refresh with `Ctrl+Shift+R`
+2. Turn on **debug logging** in [Settings](Settings-Panel) and check the browser console for `[RA Toolkit]` messages
+3. [Open an issue](https://github.com/WelingtonMonteiro/ra-toolkit/issues) with the page URL and the console output
 
 ---
 

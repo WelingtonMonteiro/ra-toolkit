@@ -39,18 +39,22 @@ Only shown if the player has recent activity data:
 | **Avg pts/week** | Average points earned per week |
 | **Avg completion** | Average completion percentage across games |
 
-## Softcore Stats (3 cards)
+## Casual Stats (3 cards)
 
-Only shown if the player has softcore activity. Uses dimmer styling:
+Only shown if the player has casual (formerly "softcore") activity. Uses dimmer styling:
 
 <img width="1032" height="167" alt="image" src="images/aa1f2193-b48e-4713-9549-2f58dcbd1a93.png" />
 
 | Card | Description |
 |------|-------------|
-| **Points** | Softcore points |
-| **Rank** | Softcore rank |
-| **Achievements** | Softcore achievements |
+| **Points** | Casual points |
+| **Rank** | Casual rank |
+| **Achievements** | Casual achievements |
 
 ## Data source
 
 All data is scraped from the native RA User Stats DOM (no extra API calls needed).
+
+> **Since v2.9.0:** RetroAchievements renamed its "softcore" stat labels to
+> **casual** (`Points (casual)`, `Casual rank`, `Achievements unlocked (casual)`).
+> The script reads the new labels and still falls back to the old ones.

@@ -13,7 +13,7 @@ Adds two tabs above the native Game Awards badge grid, letting you switch betwee
 ## Tabs
 
 - **Hardcore** beaten badges are shown in **gold** styling
-- **Softcore** beaten badges are slightly **dimmed**
+- **Casual** (formerly "softcore") beaten badges are slightly **dimmed**
 - Hover over any badge to see the game info tooltip (uses the native RA tooltip system)
 - The section heading icon and counter update when switching tabs to reflect beaten HC/SC counts
 
@@ -31,14 +31,14 @@ Adds two tabs above the native Game Awards badge grid, letting you switch betwee
 ## Mastered tab details
 
 - **Hardcore** beaten badges are shown in **gold** styling
-- **Softcore** beaten badges are slightly **dimmed**
+- **Casual** beaten badges are slightly **dimmed**
 
 <img width="443" height="274" alt="image" src="images/cc89c4a3-f6ee-4ea8-b220-cb29b28a691d.png" />
 
 ## Beaten tab details
 
 - **Hardcore** beaten badges are shown in **gold** styling
-- **Softcore** beaten badges are slightly **dimmed**
+- **Casual** beaten badges are slightly **dimmed**
 - Hover over any badge to see the game info tooltip (uses the native RA tooltip system)
 - The section heading icon and counter update when switching tabs to reflect beaten HC/SC counts
 
@@ -48,3 +48,9 @@ Adds two tabs above the native Game Awards badge grid, letting you switch betwee
 
 - **Mastered tab:** Native DOM content (no API call)
 - **Beaten tab:** Fetched from `API_GetUserAwards` endpoint
+
+## Troubleshooting
+
+If the **Beaten** tab shows *"Failed to load beaten games"*, update to **v2.9.0
+or newer** — earlier versions built the badge tooltips with an attribute name
+the browser rejects, which aborted the render.

@@ -11,3 +11,6 @@ Retro_Enhanced.user.js
 # OS
 .DS_Store
 Thumbs.db
+
+# Node
+node_modules/

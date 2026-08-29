@@ -1,0 +1,18 @@
+{
+  "name": "ra-toolkit",
+  "version": "2.9.0",
+  "private": true,
+  "description": "Tests for the RA Toolkit userscript for RetroAchievements.org",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:contract": "vitest run tests/raweb-contract.test.js",
+    "test:drift": "vitest run tests/raweb-drift.test.js",
+    "raweb:sync": "node scripts/sync-raweb-fixtures.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.1",
+    "vitest": "^2.1.9"
+  }
+}
