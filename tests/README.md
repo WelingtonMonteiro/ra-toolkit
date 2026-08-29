@@ -1,9 +1,9 @@
 # RA Toolkit tests
 
-`RA_Toolkit.user.js` decorates pages that RetroAchievements itself renders, so
-the tests run the real userscript in jsdom against fixtures that mirror RAWeb's
-components — and assert its selectors against frozen copies of RAWeb's own
-source, committed here so the suite runs anywhere.
+The toolkit decorates pages that RetroAchievements itself renders, so the tests
+run its modules in jsdom against fixtures that mirror RAWeb's components — and
+assert its selectors against frozen copies of RAWeb's own source, committed here
+so the suite runs anywhere.
 
 ```bash
 npm install
@@ -18,7 +18,7 @@ npm run raweb:sync     # refresh the frozen fixtures from ./RAWeb
 
 | File | Covers |
 |------|--------|
-| `helpers/harness.js` | Loads the userscript, mocks the `GM_*` API, isolates timers/observers between tests |
+| `helpers/harness.js` | Loads `src/`, mocks the `GM_*` API, isolates timers/observers/modules between tests |
 | `fixtures/raweb.js` | DOM fixtures, each annotated with the RAWeb file it mirrors |
 | `core-helpers.test.js` | Inertia props, HTML/XML parsing, escaping, theme detection, rarity tiers, `waitForElement` |
 | `settings-page.test.js` | Panel injection on the tabbed `/settings` page, and every control's persistence |
@@ -29,16 +29,20 @@ npm run raweb:sync     # refresh the frozen fixtures from ./RAWeb
 | `nav-and-games.test.js` | Achievements navbar dropdown, Most Mastered tab on `/games` |
 | `storage-and-network.test.js` | `gmFetch`, MyMemory rate limiter, ROM cache TTL, changelog popup, cleanup |
 | `bootstrap.test.js` | Hydration wait, auto start, Inertia SPA navigation |
+| `bundle.test.js` | The built `dist/RA_Toolkit.user.js`: header, self-execution, no debug toggle |
 | `raweb-contract.test.js` | Every selector/label the script depends on, asserted against the frozen RAWeb markup |
 | `raweb-drift.test.js` | Whether that frozen markup still matches a local `./RAWeb` checkout (skipped without one) |
 | `fixtures/raweb-source.js` | **Generated.** Frozen slices of RAWeb's source — do not edit by hand |
 
 ## How the harness works
 
-The userscript is a single IIFE with no exports. Before evaluating it, the
-harness appends an export of its top-level functions and gates the auto-start
-block behind a flag, so tests drive each block explicitly. Nothing test-only is
-added to the shipped file.
+Tests import the modules through `src/api.js`, re-importing them on every
+`loadToolkit()` call so per-module state starts fresh. The bootstrap only runs
+when a test asks for it, so nothing races the block under test. Nothing
+test-only is added to the shipped bundle.
+
+`bundle.test.js` is the exception: it evaluates the built file to check the
+build itself.
 
 ## Keeping up with RetroAchievements
 

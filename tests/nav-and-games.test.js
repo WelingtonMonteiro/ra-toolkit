@@ -13,13 +13,13 @@ import { currentVersion, flush, loadToolkit, navigate, waitFor } from './helpers
 let api;
 let store;
 
-beforeEach(() => {
+beforeEach(async () => {
   store = { lastSeenVersion: currentVersion() };
-  ({ api } = loadToolkit({ url: 'https://retroachievements.org/games', store }));
+  ({ api } = await loadToolkit({ url: 'https://retroachievements.org/games', store }));
 });
 
 describe('achievements nav dropdown', () => {
-  it('inserts an Achievements dropdown right after Games', () => {
+  it('inserts an Achievements dropdown right after Games', async () => {
     document.body.innerHTML = navbar();
 
     api.initAchievementNavLinks();
@@ -31,7 +31,7 @@ describe('achievements nav dropdown', () => {
     expect(dropdown.classList.contains('nav-item')).toBe(true);
   });
 
-  it('links to the achievement list pages', () => {
+  it('links to the achievement list pages', async () => {
     document.body.innerHTML = navbar();
 
     api.initAchievementNavLinks();
@@ -46,7 +46,7 @@ describe('achievements nav dropdown', () => {
     ]);
   });
 
-  it('does not inject twice', () => {
+  it('does not inject twice', async () => {
     document.body.innerHTML = navbar();
 
     api.initAchievementNavLinks();
@@ -55,7 +55,7 @@ describe('achievements nav dropdown', () => {
     expect(document.querySelectorAll('#re-achievements-dropdown')).toHaveLength(1);
   });
 
-  it('does nothing when the navbar is missing', () => {
+  it('does nothing when the navbar is missing', async () => {
     document.body.innerHTML = '<div></div>';
 
     api.initAchievementNavLinks();

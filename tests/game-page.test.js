@@ -31,10 +31,10 @@ async function renderGamePage(options = {}) {
 const sidebar = () => document.querySelector('aside [data-testid="sidebar"]');
 const romsSection = () => document.getElementById('enhanced-romsdl');
 
-beforeEach(() => {
+beforeEach(async () => {
   store = { lastSeenVersion: currentVersion(), enableSpeedrun: false, enableGameplayVideo: false };
   responses = new Map();
-  ({ api } = loadToolkit({
+  ({ api } = await loadToolkit({
     url: 'https://retroachievements.org/game/1',
     store,
     respond: (options) => {

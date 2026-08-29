@@ -22,9 +22,9 @@ async function renderProfile(options) {
   });
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   store = { lastSeenVersion: currentVersion(), raApiKey: 'test-key' };
-  ({ api } = loadToolkit({
+  ({ api } = await loadToolkit({
     url: 'https://retroachievements.org/user/Welington',
     store,
     respond: () => null,

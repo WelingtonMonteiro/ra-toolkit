@@ -23,9 +23,9 @@ function legacyWall(body) {
   );
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   store = { lastSeenVersion: currentVersion(), translateLang: 'pt-BR' };
-  ({ api } = loadToolkit({
+  ({ api } = await loadToolkit({
     url: 'https://retroachievements.org/user/Welington',
     store,
     respond: (options) =>

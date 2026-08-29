@@ -11,14 +11,14 @@ import { currentVersion, flush, loadToolkit, waitFor } from './helpers/harness.j
 
 describe('waitForHydration', () => {
   it('resolves immediately when there is no Inertia root', async () => {
-    const { api } = loadToolkit();
+    const { api } = await loadToolkit();
     document.body.innerHTML = '<main></main>';
 
     await expect(api.waitForHydration(50)).resolves.toBeUndefined();
   });
 
   it('resolves immediately when React already hydrated the root', async () => {
-    const { api } = loadToolkit();
+    const { api } = await loadToolkit();
     document.body.innerHTML = '<div id="app"></div>';
     document.getElementById('app')['__reactFiber$abc'] = {};
 
@@ -26,7 +26,7 @@ describe('waitForHydration', () => {
   });
 
   it('waits for React to attach, then resolves', async () => {
-    const { api } = loadToolkit();
+    const { api } = await loadToolkit();
     document.body.innerHTML = '<div id="app"></div>';
     const app = document.getElementById('app');
 
@@ -40,7 +40,7 @@ describe('waitForHydration', () => {
   });
 
   it('gives up after the timeout so a client-only render still gets decorated', async () => {
-    const { api } = loadToolkit();
+    const { api } = await loadToolkit();
     document.body.innerHTML = '<div id="app"></div>';
 
     await expect(api.waitForHydration(50)).resolves.toBeUndefined();
@@ -61,7 +61,7 @@ describe('auto start', () => {
   });
 
   it('re-runs on Inertia SPA navigation', async () => {
-    const { api } = loadToolkit({
+    const { api } = await loadToolkit({
       url: 'https://retroachievements.org/',
       store: { lastSeenVersion: currentVersion() },
       html: '<div id="app"></div>',
@@ -79,7 +79,7 @@ describe('auto start', () => {
   });
 
   it('skips a duplicate run for the same URL', async () => {
-    const { api } = loadToolkit({
+    const { api } = await loadToolkit({
       url: 'https://retroachievements.org/settings',
       store: { lastSeenVersion: currentVersion() },
       html: settingsPage(),

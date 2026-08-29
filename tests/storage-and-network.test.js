@@ -11,20 +11,20 @@ let api;
 let store;
 let respond;
 
-function load(responder = () => null) {
+async function load(responder = () => null) {
   respond = responder;
   store = { lastSeenVersion: currentVersion() };
-  ({ api } = loadToolkit({ store, respond: (options) => respond(options) }));
+  ({ api } = await loadToolkit({ store, respond: (options) => respond(options) }));
   return api;
 }
 
-beforeEach(() => {
-  load();
+beforeEach(async () => {
+  await load();
 });
 
 describe('gmFetch', () => {
   it('resolves on a 2xx response', async () => {
-    load(() => ({ status: 200, responseText: 'hello' }));
+    await load(() => ({ status: 200, responseText: 'hello' }));
 
     await expect(api.gmFetch('https://myrient.erista.me/files/')).resolves.toMatchObject({
       status: 200,
@@ -33,19 +33,19 @@ describe('gmFetch', () => {
   });
 
   it('rejects on an HTTP error', async () => {
-    load(() => ({ status: 500, responseText: '' }));
+    await load(() => ({ status: 500, responseText: '' }));
 
     await expect(api.gmFetch('https://archive.org/x')).rejects.toThrow('HTTP 500');
   });
 
   it('rejects on a network error', async () => {
-    load(() => null);
+    await load(() => null);
 
     await expect(api.gmFetch('https://archive.org/x')).rejects.toThrow(/Network error/);
   });
 
   it('rejects on a timeout', async () => {
-    load(() => 'timeout');
+    await load(() => 'timeout');
 
     await expect(api.gmFetch('https://archive.org/x')).rejects.toThrow(/Timeout fetching/);
   });
@@ -61,7 +61,7 @@ describe('translation rate limiter', () => {
   };
 
   it('translates and records the character spend', async () => {
-    load(() => ok);
+    await load(() => ok);
 
     await expect(api.translateWithRateLimit('Hello', 'pt-BR')).resolves.toBe('Olá');
     expect(store.translateUsage.chars).toBe(5);
@@ -70,7 +70,7 @@ describe('translation rate limiter', () => {
 
   it('sends the target language as a MyMemory langpair', async () => {
     let requested = '';
-    load((options) => {
+    await load((options) => {
       requested = options.url;
       return ok;
     });
@@ -82,7 +82,7 @@ describe('translation rate limiter', () => {
   });
 
   it('refuses once the daily budget is spent', async () => {
-    load(() => ok);
+    await load(() => ok);
     store.translateUsage = { date: api.getTodayKey(), chars: 5000 };
 
     await expect(api.translateWithRateLimit('Hello', 'pt-BR')).rejects.toThrow(
@@ -91,7 +91,7 @@ describe('translation rate limiter', () => {
   });
 
   it('refuses a text longer than the remaining budget', async () => {
-    load(() => ok);
+    await load(() => ok);
     store.translateUsage = { date: api.getTodayKey(), chars: 4998 };
 
     await expect(api.translateWithRateLimit('Hello', 'pt-BR')).rejects.toThrow(
@@ -100,14 +100,14 @@ describe('translation rate limiter', () => {
   });
 
   it('resets the budget on a new day', async () => {
-    load(() => ok);
+    await load(() => ok);
     store.translateUsage = { date: '2000-01-01', chars: 5000 };
 
     await expect(api.translateWithRateLimit('Hello', 'pt-BR')).resolves.toBe('Olá');
   });
 
   it('surfaces a MyMemory error response', async () => {
-    load(() => ({
+    await load(() => ({
       status: 200,
       responseText: JSON.stringify({ responseStatus: 403, responseDetails: 'QUOTA EXCEEDED' }),
     }));
@@ -117,7 +117,7 @@ describe('translation rate limiter', () => {
 });
 
 describe('ROM cache', () => {
-  it('namespaces the key by console and normalised title', () => {
+  it('namespaces the key by console and normalised title', async () => {
     expect(api.getRomCacheKey('Sonic the Hedgehog', 'Genesis/Mega Drive')).toBe(
       'romCache_Genesis/Mega Drive_sonic_the_hedgehog',
     );
@@ -174,7 +174,7 @@ describe('changelog popup', () => {
 });
 
 describe('cleanup', () => {
-  it('removes every container the toolkit injects', () => {
+  it('removes every container the toolkit injects', async () => {
     document.body.innerHTML =
       '<div id="enhanced-settings"></div>' +
       '<div id="enhanced-romsdl"></div>' +
