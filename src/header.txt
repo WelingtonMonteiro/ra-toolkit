@@ -1,0 +1,31 @@
+// ==UserScript==
+// @name         RA Toolkit
+// @namespace    https://github.com/WelingtonMonteiro
+// @version      __VERSION__
+// @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
+// @author       Miagui / Updated by Welington
+// @match        *://retroachievements.org/*
+// @license      MIT
+// @icon         https://retroachievements.org/assets/images/ra-logo.webp
+// @homepageURL  https://github.com/WelingtonMonteiro/ra-toolkit
+// @supportURL   https://github.com/WelingtonMonteiro/ra-toolkit/issues
+// @updateURL    https://update.greasyfork.org/scripts/570282/RA%20Toolkit.user.js
+// @downloadURL  https://update.greasyfork.org/scripts/570282/RA%20Toolkit.user.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js
+// @grant        GM_xmlhttpRequest
+// @grant        GM_log
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_listValues
+// @grant        GM_deleteValue
+// @connect      archive.org
+// @connect      the-eye.eu
+// @connect      raw.githubusercontent.com
+// @connect      sheets.googleapis.com
+// @connect      emuparadise.me
+// @connect      speedrun.com
+// @connect      myrient.erista.me
+// @connect      retroachievements.org
+// @connect      api.mymemory.translated.net
+// @connect      romsfun.com
+// ==/UserScript==

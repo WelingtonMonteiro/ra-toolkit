@@ -5,6 +5,9 @@
   "description": "Tests for the RA Toolkit userscript for RetroAchievements.org",
   "type": "module",
   "scripts": {
+    "build": "node build.js",
+    "build:debug": "RA_TOOLKIT_DEBUG=1 node build.js",
+    "build:check": "node build.js --check",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:contract": "vitest run tests/raweb-contract.test.js",
@@ -12,6 +15,7 @@
     "raweb:sync": "node scripts/sync-raweb-fixtures.mjs"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "jsdom": "^25.0.1",
     "vitest": "^2.1.9"
   }
