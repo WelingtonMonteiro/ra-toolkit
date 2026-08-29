@@ -31,9 +31,9 @@ async function renderAwards({ settle = true } = {}) {
 
 const beatenGrid = () => document.querySelector('#gameawards .component').nextElementSibling;
 
-beforeEach(() => {
+beforeEach(async () => {
   store = { lastSeenVersion: currentVersion(), raApiKey: 'test-key' };
-  ({ api } = loadToolkit({
+  ({ api } = await loadToolkit({
     url: 'https://retroachievements.org/user/Welington',
     store,
     respond: (options) =>
@@ -121,7 +121,7 @@ describe('tabs', () => {
   });
 
   it('shows an empty state when the user has beaten nothing', async () => {
-    ({ api } = loadToolkit({
+    ({ api } = await loadToolkit({
       url: 'https://retroachievements.org/user/Welington',
       store,
       respond: () => ({ status: 200, responseText: JSON.stringify({ VisibleUserAwards: [] }) }),

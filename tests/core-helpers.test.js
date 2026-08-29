@@ -5,36 +5,36 @@ import { loadToolkit } from './helpers/harness.js';
 
 let api;
 
-beforeAll(() => {
-  ({ api } = loadToolkit());
+beforeAll(async () => {
+  ({ api } = await loadToolkit());
 });
 
 describe('HTML/XML parsing', () => {
-  it('parses an HTML string into a detached document', () => {
+  it('parses an HTML string into a detached document', async () => {
     const doc = api.parseHtml('<ul><li class="a">one</li><li class="a">two</li></ul>');
 
     expect(doc.querySelectorAll('li.a')).toHaveLength(2);
   });
 
-  it('parses an XML string (speedrun.com responses)', () => {
+  it('parses an XML string (speedrun.com responses)', async () => {
     const doc = api.parseXml('<runs><run id="abc" /></runs>');
 
     expect(doc.querySelector('run').getAttribute('id')).toBe('abc');
   });
 
-  it('escapes HTML so scraped ROM names cannot inject markup', () => {
+  it('escapes HTML so scraped ROM names cannot inject markup', async () => {
     expect(api.escapeHtml('<img src=x onerror="alert(1)">')).toBe(
       '&lt;img src=x onerror=&quot;alert(1)&quot;&gt;',
     );
   });
 
-  it('escapes single quotes and ampersands', () => {
+  it('escapes single quotes and ampersands', async () => {
     expect(api.escapeHtml(`Tom & Jerry's`)).toBe('Tom &amp; Jerry&#039;s');
   });
 });
 
 describe('getInertiaProps', () => {
-  it('reads props out of the #app data-page blob', () => {
+  it('reads props out of the #app data-page blob', async () => {
     document.body.innerHTML = inertiaRoot('<main></main>', gamePageProps());
 
     const props = api.getInertiaProps();
@@ -43,13 +43,13 @@ describe('getInertiaProps', () => {
     expect(props.game.system.name).toBe('Genesis/Mega Drive');
   });
 
-  it('returns null when the page is not an Inertia page', () => {
+  it('returns null when the page is not an Inertia page', async () => {
     document.body.innerHTML = '<main></main>';
 
     expect(api.getInertiaProps()).toBeNull();
   });
 
-  it('returns null instead of throwing on malformed data-page', () => {
+  it('returns null instead of throwing on malformed data-page', async () => {
     document.body.innerHTML = '<div id="app" data-page="{not json"></div>';
 
     expect(api.getInertiaProps()).toBeNull();
@@ -57,19 +57,19 @@ describe('getInertiaProps', () => {
 });
 
 describe('getLoggedUser', () => {
-  it('prefers the display name from Inertia auth props', () => {
+  it('prefers the display name from Inertia auth props', async () => {
     document.body.innerHTML = inertiaRoot('<main></main>', gamePageProps({ displayName: 'Miagui' }));
 
     expect(api.getLoggedUser()).toBe('Miagui');
   });
 
-  it('falls back to the account dropdown header on legacy pages', () => {
+  it('falls back to the account dropdown header on legacy pages', async () => {
     document.body.innerHTML = '<div class="dropdown-header"> Welington </div>';
 
     expect(api.getLoggedUser()).toBe('Welington');
   });
 
-  it('returns an empty string when logged out', () => {
+  it('returns an empty string when logged out', async () => {
     document.body.innerHTML = '<main></main>';
 
     expect(api.getLoggedUser()).toBe('');
@@ -77,7 +77,7 @@ describe('getLoggedUser', () => {
 });
 
 describe('theme detection', () => {
-  it('reads data-scheme from <html>, as set by layouts/app.blade.php', () => {
+  it('reads data-scheme from <html>, as set by layouts/app.blade.php', async () => {
     document.documentElement.setAttribute('data-scheme', 'light');
     expect(api.getScheme()).toBe('light');
     expect(api.isLightMode()).toBe(true);
@@ -87,7 +87,7 @@ describe('theme detection', () => {
     expect(api.isLightMode()).toBe(false);
   });
 
-  it('defaults to dark when no scheme cookie was set', () => {
+  it('defaults to dark when no scheme cookie was set', async () => {
     document.documentElement.removeAttribute('data-scheme');
 
     expect(api.getScheme()).toBe('dark');
@@ -112,7 +112,7 @@ describe('getRarityTier', () => {
     expect(api.getRarityTier(percentage).label).toBe(label);
   });
 
-  it('returns a colour and background for the badge', () => {
+  it('returns a colour and background for the badge', async () => {
     const tier = api.getRarityTier(1);
 
     expect(tier.color).toMatch(/^#[0-9a-f]{6}$/i);

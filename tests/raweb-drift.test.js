@@ -30,7 +30,7 @@ describeDrift('frozen RAWeb fixtures', () => {
     },
   );
 
-  it.each(apiEndpoints)('%s is still served by RAWeb', (endpoint) => {
+  it.each(apiEndpoints)('%s is still served by RAWeb', async (endpoint) => {
     expect(() => readRaweb(`public/API/${endpoint}.php`)).not.toThrow();
   });
 });

@@ -61,7 +61,19 @@ The script is aware of RetroAchievements' single-page application navigation (In
 
 ## Structured Logging
 
-For troubleshooting, enable **"Enable debug logging"** in [Settings](Settings-Panel):
-- Logs appear in the Tampermonkey console (Tampermonkey icon → Dashboard → select script → Console)
-- 4 log levels: debug, info, warn, error
-- Disabled by default to avoid console noise
+The script logs through 4 levels — debug, info, warn, error — to the Tampermonkey
+console (Tampermonkey icon → Dashboard → select the script → Console).
+
+Only info and above are logged. **Debug-level logging is not available in the
+published script**: since v2.9.0 it lives in a separate build, so verbose logging
+can't be switched on by whoever installs the script.
+
+If you are developing on the script and want debug logs, build it yourself:
+
+```bash
+npm run build:debug   # → dist/RA_Toolkit.debug.user.js
+```
+
+That build adds the "Enable debug logging" toggle to the settings panel (on by
+default). It installs as **RA Toolkit (debug)**, separate from the public script,
+and is never auto-updated over.

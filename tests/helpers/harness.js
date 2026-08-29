@@ -1,24 +1,43 @@
 /**
- * Test harness for RA_Toolkit.user.js.
+ * Test harness.
  *
- * The userscript is a single IIFE with no exports, so we append an export
- * statement to its last line before evaluating it. That keeps the shipped file
- * free of test-only code while still letting each block be unit tested.
+ * The toolkit is a set of ES modules under src/, bundled into the published
+ * userscript by `npm run build`. Tests import those modules directly through
+ * src/api.js — nothing test-only is added to the shipped bundle.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { vi } from 'vitest';
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-export const SCRIPT_PATH = path.resolve(here, '../../RA_Toolkit.user.js');
+/** The published bundle, built from src/. */
+export const SCRIPT_PATH = path.resolve(here, '../../dist/RA_Toolkit.user.js');
+export const SRC_PATH = path.resolve(here, '../../src');
 export const RAWEB_PATH = path.resolve(here, '../../RAWeb');
 
 export function readUserscript() {
   return fs.readFileSync(SCRIPT_PATH, 'utf8');
 }
 
-/** Reads a file from the vendored RAWeb checkout (the site's own source). */
+/** Concatenates every module under src/, for assertions about the source. */
+export function readSource() {
+  const files = [];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith('.js')) files.push(full);
+    }
+  };
+  walk(SRC_PATH);
+  files.sort();
+  return files.map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+}
+
+/** Reads a file from the local RAWeb reference checkout. */
 export function readRaweb(relativePath) {
   return fs.readFileSync(path.join(RAWEB_PATH, relativePath), 'utf8');
 }
@@ -27,54 +46,11 @@ export function hasRaweb() {
   return fs.existsSync(RAWEB_PATH);
 }
 
-/** The version the userscript reports, used to silence the changelog popup. */
+/** The version the bundle reports, used to silence the changelog popup. */
 export function currentVersion() {
-  const match = readUserscript().match(/var CURRENT_VERSION = "([^"]+)"/);
-  if (!match) throw new Error('Could not read CURRENT_VERSION from the userscript.');
+  const match = readUserscript().match(/@version\s+(\S+)/);
+  if (!match) throw new Error('Could not read the version from the bundle.');
   return match[1];
-}
-
-/** Function declarations at the IIFE's top level are indented by two spaces. */
-export function topLevelFunctionNames(source) {
-  const names = new Set();
-  const re = /^ {2}(?:async )?function ([A-Za-z_$][\w$]*)\s*\(/gm;
-  let match;
-  while ((match = re.exec(source)) !== null) {
-    names.add(match[1]);
-  }
-  return [...names];
-}
-
-const AUTOSTART_MARKER = '  // Run on initial page load (after hydration)';
-
-function instrument(source) {
-  const names = topLevelFunctionNames(source);
-  const closing = '\n})();';
-  const at = source.lastIndexOf(closing);
-  if (at === -1) {
-    throw new Error('Could not find the closing IIFE of the userscript.');
-  }
-
-  const autoStartAt = source.indexOf(AUTOSTART_MARKER);
-  if (autoStartAt === -1 || autoStartAt > at) {
-    throw new Error('Could not find the auto-start block of the userscript.');
-  }
-
-  const exposure =
-    '\n  globalThis.__RA_TOOLKIT__ = {' +
-    names.map((name) => `\n    ${name}: ${name},`).join('') +
-    '\n  };\n';
-
-  // Gate the auto-start so tests drive each block explicitly instead of racing
-  // a background pass that would `cleanup()` their injected nodes.
-  return (
-    source.slice(0, autoStartAt) +
-    '  if (globalThis.__RA_TOOLKIT_AUTOSTART__) {\n' +
-    source.slice(autoStartAt, at) +
-    '\n  }\n' +
-    exposure +
-    source.slice(at)
-  );
 }
 
 /**
@@ -82,7 +58,8 @@ function instrument(source) {
  *
  * `store` backs GM_getValue/GM_setValue, and `respond` stands in for the
  * network: it receives the GM_xmlhttpRequest options and returns either a
- * response object (`{ status, responseText }`) or `null` for a network error.
+ * response object (`{ status, responseText }`), the string `'timeout'`, or
+ * `null` for a network error.
  */
 export function installGmMocks(win, { store = {}, respond = () => null } = {}) {
   const state = { store, respond, requests: [] };
@@ -114,12 +91,16 @@ export function installGmMocks(win, { store = {}, respond = () => null } = {}) {
       });
   };
 
+  for (const name of ['GM_getValue', 'GM_setValue', 'GM_deleteValue', 'GM_listValues', 'GM_log', 'GM_xmlhttpRequest']) {
+    globalThis[name] = win[name];
+  }
+
   return state;
 }
 
 /**
- * Tracks every MutationObserver the script creates so a previous load's
- * observers can be torn down before the next one, keeping tests isolated.
+ * Tracks every MutationObserver the modules create so a previous test's
+ * observers can be torn down before the next one.
  */
 const liveObservers = new Set();
 
@@ -231,26 +212,34 @@ export function installCanvasStub(win) {
 }
 
 /**
- * Evaluates the userscript in the current jsdom window and returns its
- * internals plus the GM mock state.
+ * Loads the toolkit into the current jsdom window and returns its public
+ * surface plus the GM mock state.
  *
- * The script auto-runs on load. Callers get a bare document by default, so the
- * automatic pass is a no-op and each test can drive `init()` itself.
+ * Modules are re-imported on every call (`vi.resetModules()`), so per-module
+ * state — the log level, the reattach observers, the SPA-navigation guard —
+ * starts fresh in each test.
+ *
+ * The bootstrap only runs when `autoStart` is set, so tests drive each block
+ * explicitly instead of racing a background pass that would `cleanup()` the
+ * nodes they just injected.
+ *
+ * `debugBuild` stands in for `RA_TOOLKIT_DEBUG=1 npm run build`, which is the
+ * only build that exposes the debug-logging toggle.
  */
-export function loadToolkit({
+export async function loadToolkit({
   url = 'https://retroachievements.org/',
   store,
   respond,
   autoStart = false,
   html,
   hydrated = false,
+  debugBuild = false,
 } = {}) {
-  // Observers, styles and containers injected by an earlier load would
-  // otherwise leak between tests in the same file.
   installObserverTracker(window);
   installTimerTracker(window);
   disconnectObservers();
   clearTimers();
+
   document.head.innerHTML = '';
   document.body.innerHTML = '';
   document.documentElement.removeAttribute('data-scheme');
@@ -265,16 +254,22 @@ export function loadToolkit({
     if (app) app['__reactFiber$test'] = {};
   }
 
-  globalThis.__RA_TOOLKIT_AUTOSTART__ = autoStart;
   installCanvasStub(window);
   const gm = installGmMocks(window, { store, respond });
-  const code = instrument(readUserscript());
 
-  // Indirect eval keeps the script in global scope, like Tampermonkey does.
-  // eslint-disable-next-line no-eval
-  (0, eval)(code);
+  vi.resetModules();
+  vi.doUnmock('../../src/build-flags.js');
+  if (debugBuild) {
+    vi.doMock('../../src/build-flags.js', () => ({ IS_DEBUG_BUILD: true }));
+  }
 
-  return { api: globalThis.__RA_TOOLKIT__, gm, store: gm.store };
+  const api = await import('../../src/api.js');
+
+  if (autoStart) {
+    api.start();
+  }
+
+  return { api, gm, store: gm.store };
 }
 
 /** Navigates without a reload, the way Inertia does. */

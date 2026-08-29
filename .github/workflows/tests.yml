@@ -21,10 +21,12 @@ jobs:
 
       - run: npm ci
 
-      # The published file is what Tampermonkey loads, so a syntax error here
-      # breaks every user before any test would catch it.
+      # The committed bundle is what Tampermonkey loads, so it must match src/.
+      - name: Check the bundle is up to date with src/
+        run: npm run build:check
+
       - name: Check the userscript parses
-        run: node --check RA_Toolkit.user.js
+        run: node --check dist/RA_Toolkit.user.js
 
       - name: Run the test suite
         run: npm test

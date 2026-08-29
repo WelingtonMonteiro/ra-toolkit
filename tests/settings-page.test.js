@@ -23,34 +23,34 @@ async function renderSettings(html = settingsPage()) {
 const panelHost = () => document.querySelector('div.min-w-0');
 const card = () => document.getElementById('enhanced-settings');
 
-beforeEach(() => {
+beforeEach(async () => {
   store = { lastSeenVersion: currentVersion() };
-  ({ api } = loadToolkit({ url: 'https://retroachievements.org/settings', store }));
+  ({ api } = await loadToolkit({ url: 'https://retroachievements.org/settings', store }));
 });
 
 describe('findSettingsPanelHost', () => {
-  it('returns the element that hosts the tab panels', () => {
+  it('returns the element that hosts the tab panels', async () => {
     document.body.innerHTML = settingsPage();
     const root = document.querySelector('main article');
 
     expect(api.findSettingsPanelHost(root)).toBe(panelHost());
   });
 
-  it('falls back to the pre-tabs card column', () => {
+  it('falls back to the pre-tabs card column', async () => {
     document.body.innerHTML = legacySettingsPage();
     const root = document.querySelector('main article');
 
     expect(api.findSettingsPanelHost(root)).toBe(document.querySelector('div.flex.flex-col > div.flex.flex-col'));
   });
 
-  it('falls back to the article itself when nothing matches', () => {
+  it('falls back to the article itself when nothing matches', async () => {
     document.body.innerHTML = '<main><article><p>hi</p></article></main>';
     const root = document.querySelector('article');
 
     expect(api.findSettingsPanelHost(root)).toBe(root);
   });
 
-  it('returns null without a root element', () => {
+  it('returns null without a root element', async () => {
     expect(api.findSettingsPanelHost(null)).toBeNull();
   });
 });
@@ -110,7 +110,6 @@ describe('settings panel injection', () => {
       'enhanced-gameplayvideo',
       'enhanced-custombg',
       'enhanced-glassEffect',
-      'enhanced-debuglog',
       'enhanced-rarity',
       'enhanced-translate-lang',
       'enhanced-apikey',
@@ -189,5 +188,55 @@ describe('settings persistence', () => {
     await renderSettings();
 
     expect(document.getElementById('enhanced-apikey').value).toBe('" onfocus="alert(1)');
+  });
+});
+
+describe('debug build', () => {
+  it('hides the debug-logging toggle in the published build', async () => {
+    await renderSettings();
+
+    expect(document.getElementById('enhanced-debuglog')).toBeNull();
+  });
+
+  it('offers the toggle when built with RA_TOOLKIT_DEBUG=1', async () => {
+    ({ api } = await loadToolkit({
+      url: 'https://retroachievements.org/settings',
+      store,
+      debugBuild: true,
+    }));
+
+    await renderSettings();
+
+    const toggle = document.getElementById('enhanced-debuglog');
+    expect(toggle).not.toBeNull();
+    // A debug build defaults to verbose logging.
+    expect(toggle.dataset.state).toBe('checked');
+
+    toggle.click();
+    expect(store.enableDebugLog).toBe(false);
+
+    toggle.click();
+    expect(store.enableDebugLog).toBe(true);
+  });
+
+  it('keeps debug logging off in the published build even if it was stored', async () => {
+    store.enableDebugLog = true;
+
+    const config = await api.loadConfig();
+
+    expect(config.enableDebugLog).toBe(false);
+  });
+
+  it('reads the stored value in a debug build', async () => {
+    ({ api } = await loadToolkit({
+      url: 'https://retroachievements.org/settings',
+      store,
+      debugBuild: true,
+    }));
+
+    expect((await api.loadConfig()).enableDebugLog).toBe(true);
+
+    store.enableDebugLog = false;
+    expect((await api.loadConfig()).enableDebugLog).toBe(false);
   });
 });
