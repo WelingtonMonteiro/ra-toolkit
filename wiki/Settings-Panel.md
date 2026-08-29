@@ -3,7 +3,11 @@
 ## How to open
 
 1. Go to [retroachievements.org/settings](https://retroachievements.org/settings)
-2. Scroll down — you'll see a **"RA Toolkit"** card below the native settings
+2. Scroll to the bottom of the page — you'll see a **"RA Toolkit"** card below the native settings cards
+
+> **Since v2.9.0:** RetroAchievements split the settings page into tabs
+> (*Profile*, *Notifications*, *Account*, *Applications*). The RA Toolkit card is
+> pinned below whichever tab is open, so you can reach it from any of them.
 
 ## Toggles (on/off switches)
 

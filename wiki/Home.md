@@ -5,7 +5,7 @@
 <h1 align="center">🎮 RA Toolkit — User Guide</h1>
 
 <p align="center">
-  Complete guide for <strong>RA Toolkit v2.8.0</strong><br>
+  Complete guide for <strong>RA Toolkit v2.9.0</strong><br>
   A Tampermonkey userscript for <a href="https://retroachievements.org">RetroAchievements.org</a>
 </p>
 

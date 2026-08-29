@@ -14,7 +14,10 @@
   <a href="https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js">
     <img src="https://img.shields.io/badge/Install-Tampermonkey-green?logo=tampermonkey" alt="Install">
   </a>
-  <img src="https://img.shields.io/badge/version-2.8.2-blue" alt="Version">
+  <a href="https://github.com/WelingtonMonteiro/ra-toolkit/actions/workflows/tests.yml">
+    <img src="https://github.com/WelingtonMonteiro/ra-toolkit/actions/workflows/tests.yml/badge.svg" alt="Tests">
+  </a>
+  <img src="https://img.shields.io/badge/version-2.9.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
 </p>
 
@@ -155,7 +158,31 @@ Injected on user profile pages (`/user/{username}`) with 6 modules:
 
 ---
 
+## 🧪 Tests
+
+The script hooks onto RetroAchievements' own markup, so the suite runs it in
+jsdom against fixtures mirroring the site's components, plus contract tests that
+check every selector against frozen copies of RAWeb's own source.
+
+```bash
+npm install
+npm test
+```
+
+See [tests/README.md](tests/README.md) for the layout.
+
+---
+
 ## 📋 Changelog
+
+### v2.9.0
+- Settings: restored the RA Toolkit panel on RetroAchievements' new tabbed settings page
+- Settings: the panel stays put when switching settings tabs
+- Game page: ROMs and Speedrun sections are re-attached if React re-renders the sidebar
+- Game Awards: fixed the Beaten tab failing to render its badges
+- User Stats: reads the renamed "casual" labels (RetroAchievements renamed softcore to casual)
+- Hardening: quotes are escaped in scraped names before they reach HTML attributes
+- Added a jsdom test suite (209 tests) covering every block of the script
 
 ### v2.7.2
 - Header: restored Achievements dropdown menu (Easy Achievements, Hardest Achievements)

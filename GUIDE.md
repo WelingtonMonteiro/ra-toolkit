@@ -5,7 +5,7 @@
 <h1 align="center">📖 RA Toolkit — User Guide</h1>
 
 <p align="center">
-  Step-by-step guide for every feature in <strong>RA Toolkit v2.8.0</strong><br>
+  Step-by-step guide for every feature in <strong>RA Toolkit v2.9.0</strong><br>
   <em>A Tampermonkey userscript for <a href="https://retroachievements.org">RetroAchievements.org</a></em>
 </p>
 
@@ -58,7 +58,7 @@ Many features require a **RetroAchievements Web API key**:
 1. Log in to [retroachievements.org](https://retroachievements.org)
 2. Go to **Settings → Keys** (or visit `retroachievements.org/settings`)
 3. Copy your **Web API Key**
-4. On the same Settings page, scroll down to the **RA Toolkit** card
+4. On the same Settings page, scroll to the bottom to find the **RA Toolkit** card
 5. Paste the key in the **"RA API Key"** field
 6. Click **"Atualizar"** (Save) — the page will reload
 
@@ -86,7 +86,9 @@ Many features require a **RetroAchievements Web API key**:
 ### How to open
 
 1. Go to [retroachievements.org/settings](https://retroachievements.org/settings)
-2. Scroll down — you'll see a **"RA Toolkit"** card below the native settings
+2. Scroll to the bottom of the page — you'll see a **"RA Toolkit"** card below the native settings cards.
+   Since v2.9.0 the settings page is split into tabs (*Profile*, *Notifications*, *Account*,
+   *Applications*); the card stays below whichever tab is open.
 
 ### Available options
 
@@ -319,9 +321,9 @@ The native User Stats section is replaced with a modern card-style layout divide
 - Average points per week
 - Average completion percentage
 
-#### Softcore Stats (3 cards, if applicable)
+#### Casual Stats (3 cards, if applicable)
 
-- Softcore points, rank, and achievements (dimmer styling)
+- Casual (formerly "softcore") points, rank, and achievements (dimmer styling)
 
 ---
 
@@ -431,8 +433,8 @@ Each card shows:
 - Points earned
 - Console badge with icon
 - Last played date
-- Progress bar (hardcore % + softcore %)
-- Award label (Mastered ✨, Completed, Beaten 🏆, or Beaten Softcore) with date
+- Progress bar (hardcore % + casual %)
+- Award label (Mastered ✨, Completed, Beaten 🏆, or Beaten (casual)) with date
 
 ### Expanding achievements
 
@@ -467,7 +469,7 @@ While loading a new page, animated skeleton cards are shown as placeholders.
 ### Beaten tab details
 
 - Hardcore beaten badges are shown in **gold**
-- Softcore beaten badges are slightly **dimmed**
+- Casual beaten badges are slightly **dimmed**
 - Hover over any badge to see the game info tooltip
 - The heading counter updates to show beaten HC/SC counts
 
@@ -653,7 +655,7 @@ The script auto-updates via Tampermonkey. To check manually: Tampermonkey icon �
 
 ### The settings card doesn't appear
 
-Make sure you're on `retroachievements.org/settings` (not a sub-page). The card is injected below the native settings cards.
+Make sure you're on `retroachievements.org/settings` (not a sub-page). The card is injected at the bottom of the page, below the native settings cards, on any of the four tabs. If it is missing on v2.8.2 or older, update the script — RetroAchievements rebuilt that page as a tabbed layout.
 
 ### Can I use this on mobile?
 

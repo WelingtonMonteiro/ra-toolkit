@@ -46,8 +46,8 @@ Each game card displays:
 | **Points** | Points earned in this game |
 | **Console badge** | Icon + short name (e.g., "SNES", "PS1") |
 | **Last played** | Date of last activity |
-| **Progress bar** | Hardcore % (solid) + softcore % (lighter) |
-| **Award label** | Mastered ✨, Completed, Beaten 🏆, or Beaten Softcore — with award date |
+| **Progress bar** | Hardcore % (solid) + casual % (lighter) |
+| **Award label** | Mastered ✨, Completed, Beaten 🏆, or Beaten (casual) — with award date |
 
 ## Expanding achievements
 
