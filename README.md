@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/WelingtonMonteiro/ra-toolkit/raw/main/RA_Toolkit.user.js">
+  <a href="https://github.com/PixelC0d3/ra-toolkit/raw/main/dist/RA_Toolkit.user.js">
     <img src="https://img.shields.io/badge/Install-Tampermonkey-green?logo=tampermonkey" alt="Install">
   </a>
   <a href="https://github.com/PixelC0d3/ra-toolkit/actions/workflows/tests.yml">
@@ -158,6 +158,57 @@ Injected on user profile pages (`/user/{username}`) with 6 modules:
 
 ---
 
+## 🏗️ Project layout
+
+The script is written as ES modules under `src/` and bundled into the single
+file Tampermonkey loads.
+
+```
+src/
+  main.js              entry point: banner + bootstrap
+  bootstrap.js         hydration wait, SPA navigation, running every feature
+  app.js               per-page routing (settings / game page)
+  config.js            user settings and the styles derived from them
+  build-flags.js       flags baked in at build time
+  core/                logging, GM storage/fetch, DOM helpers, cache, theme…
+  features/
+    settings/          the RA Toolkit card on /settings
+    game-page/         ROMs, hashes, speedruns, rarity, translation
+      rom-sources/     one file per ROM source (Myrient, archive.org, …)
+    user-profile/      pagination, User Stats, insights dashboard
+      insights/        one file per dashboard module
+      styles.js        the stylesheet those widgets share
+    game-awards/       Mastered/Beaten tabs
+    games-list/        Most Mastered tab on /games
+    navbar/            Achievements dropdown
+    comments/          linkify and translation
+dist/
+  RA_Toolkit.user.js   the published bundle (committed)
+old_scripts/           the pre-split single-file version, for reference
+```
+
+```bash
+npm install
+npm run build         # → dist/RA_Toolkit.user.js
+npm run build:check   # fails if the committed bundle is stale
+```
+
+### Debug build
+
+Debug logging is **not** available in the published script — nobody who
+installs it can switch it on. To get a build that can:
+
+```bash
+npm run build:debug   # → dist/RA_Toolkit.debug.user.js
+```
+
+That build adds the "Enable debug logging" toggle to the settings panel (on by
+default), is named `RA Toolkit (debug)` so Tampermonkey keeps it separate from
+the public script, and carries no `@updateURL`, so it is never auto-updated
+back to the public build. The file is gitignored.
+
+---
+
 ## 🧪 Tests
 
 The script hooks onto RetroAchievements' own markup, so the suite runs it in
@@ -182,7 +233,9 @@ See [tests/README.md](tests/README.md) for the layout.
 - Game Awards: fixed the Beaten tab failing to render its badges
 - User Stats: reads the renamed "casual" labels (RetroAchievements renamed softcore to casual)
 - Hardening: quotes are escaped in scraped names before they reach HTML attributes
-- Added a jsdom test suite (209 tests) covering every block of the script
+- Added a jsdom test suite (218 tests) covering every block of the script
+- Split the script into ES modules under `src/`, bundled to `dist/RA_Toolkit.user.js`
+- Debug logging is now a private build (`npm run build:debug`) instead of a public toggle
 
 ### v2.7.2
 - Header: restored Achievements dropdown menu (Easy Achievements, Hardest Achievements)
