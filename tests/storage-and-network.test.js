@@ -153,7 +153,18 @@ describe('changelog popup', () => {
 
     const overlay = document.getElementById('enhanced-changelog-overlay');
     expect(overlay).not.toBeNull();
-    expect(overlay.textContent).toContain(currentVersion());
+    expect(overlay.textContent).toContain(api.CHANGELOG[0].version);
+    expect(store.lastSeenVersion).toBe(currentVersion());
+  });
+
+  it('stays quiet for a release with nothing worth announcing', async () => {
+    // A version that only changes links has no changelog entry, so the user
+    // is not interrupted — but it is still recorded as seen.
+    store.lastSeenVersion = api.CHANGELOG[0].version;
+
+    await api.showChangelogPopup();
+
+    expect(document.getElementById('enhanced-changelog-overlay')).toBeNull();
     expect(store.lastSeenVersion).toBe(currentVersion());
   });
 

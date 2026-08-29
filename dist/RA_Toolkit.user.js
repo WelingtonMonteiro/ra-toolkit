@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.9.0
+// @version      2.9.1
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
 // @license      MIT
 // @icon         https://retroachievements.org/assets/images/ra-logo.webp
-// @homepageURL  https://github.com/WelingtonMonteiro/ra-toolkit
-// @supportURL   https://github.com/WelingtonMonteiro/ra-toolkit/issues
+// @homepageURL  https://github.com/PixelC0d3/ra-toolkit
+// @supportURL   https://github.com/PixelC0d3/ra-toolkit/issues
 // @updateURL    https://update.greasyfork.org/scripts/570282/RA%20Toolkit.user.js
 // @downloadURL  https://update.greasyfork.org/scripts/570282/RA%20Toolkit.user.js
 // @require      https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js
@@ -206,7 +206,7 @@
   }
 
   // src/core/version.js
-  var CURRENT_VERSION = "2.9.0";
+  var CURRENT_VERSION = "2.9.1";
   var CHANGELOG = [
     { version: "2.9.0", changes: [
       "Settings: restored the RA Toolkit panel on the new tabbed /settings page",

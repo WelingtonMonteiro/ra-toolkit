@@ -7,7 +7,7 @@ import { escapeHtml } from './dom.js';
 // =========================================
 //   Changelog Popup (after version update)
 // =========================================
-export var CURRENT_VERSION = "2.9.0";
+export var CURRENT_VERSION = "2.9.1";
 
 export var CHANGELOG = [
   { version: "2.9.0", changes: [

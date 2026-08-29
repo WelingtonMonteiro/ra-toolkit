@@ -37,6 +37,18 @@ mkdirSync(distDir, { recursive: true });
 
 const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
 
+// The changelog popup compares against CURRENT_VERSION, so it has to agree
+// with the version stamped into the header.
+const versionSource = readFileSync(path.join(root, 'src', 'core', 'version.js'), 'utf8');
+const declaredVersion = versionSource.match(/CURRENT_VERSION = "([^"]+)"/)?.[1];
+if (declaredVersion !== pkg.version) {
+  console.error(
+    `Version mismatch: package.json says ${pkg.version}, ` +
+      `src/core/version.js says ${declaredVersion}.`,
+  );
+  process.exit(1);
+}
+
 let header = readFileSync(path.join(root, 'src', 'header.txt'), 'utf8')
   .replace('__VERSION__', pkg.version)
   .trimEnd();

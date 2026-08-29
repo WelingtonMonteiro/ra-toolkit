@@ -664,5 +664,5 @@ Yes! The script works on mobile browsers that support Tampermonkey (e.g., Firefo
 
 <p align="center">
   Made with ❤️ for the <a href="https://retroachievements.org">RetroAchievements</a> community<br>
-  <a href="https://github.com/WelingtonMonteiro/ra-toolkit">GitHub</a> · <a href="https://github.com/WelingtonMonteiro/ra-toolkit/issues">Report a Bug</a>
+  <a href="https://github.com/PixelC0d3/ra-toolkit">GitHub</a> · <a href="https://github.com/PixelC0d3/ra-toolkit/issues">Report a Bug</a>
 </p>

@@ -60,7 +60,7 @@ RA Toolkit attaches to RetroAchievements' own markup, so a site redesign can bre
 
 1. Update the script (**Tampermonkey → Utilities → Check for userscript updates**) and hard refresh with `Ctrl+Shift+R`
 2. Open the browser console and look for `[RA Toolkit]` messages — the script logs what it injects and any failure it hits
-3. [Open an issue](https://github.com/WelingtonMonteiro/ra-toolkit/issues) with the page URL and the console output
+3. [Open an issue](https://github.com/PixelC0d3/ra-toolkit/issues) with the page URL and the console output
 
 ---
 
@@ -99,6 +99,6 @@ Make sure you're on the latest version. Version 2.4.4+ uses language-agnostic pe
 
 ## Getting Help
 
-- **[Report a Bug](https://github.com/WelingtonMonteiro/ra-toolkit/issues)** — open an issue on GitHub
+- **[Report a Bug](https://github.com/PixelC0d3/ra-toolkit/issues)** — open an issue on GitHub
 - Include your browser name, Tampermonkey version, and the RA page URL where the issue occurs
 - Include any `[RA Toolkit]` output from the browser console. For a verbose trace, build the [debug version](Extras#structured-logging)
