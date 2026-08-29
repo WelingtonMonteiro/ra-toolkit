@@ -26,7 +26,10 @@
 | **Enable custom game page background** | ✅ On | Adds blurred in-game screenshot as page background |
 | **Enable glass background effect** | ✅ On | Semi-transparent glass effect on sidebar/article |
 | **Achievement rarity indicator** | ✅ On | Color-coded rarity badges on achievements |
-| **Enable debug logging** | ❌ Off | Verbose logging in Tampermonkey console (for troubleshooting) |
+
+> **Since v2.9.0:** the **"Enable debug logging"** toggle is no longer part of
+> the published script — it now only exists in a private debug build, so nobody
+> can switch verbose logging on by accident. See [Extras](Extras#structured-logging).
 
 ## Other controls
 

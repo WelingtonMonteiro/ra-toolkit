@@ -106,7 +106,6 @@ Many features require a **RetroAchievements Web API key**:
 | **Enable custom game page background** | ✅ On | Adds blurred in-game screenshot as page background |
 | **Enable glass background effect** | ✅ On | Semi-transparent glass effect on sidebar/article |
 | **Achievement rarity indicator** | ✅ On | Color-coded rarity badges on achievements |
-| **Enable debug logging** | ❌ Off | Verbose logging in Tampermonkey console (for troubleshooting) |
 
 #### Other controls
 

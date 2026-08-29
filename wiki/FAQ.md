@@ -59,7 +59,7 @@ If the card is missing on **v2.8.2 or older**, that's expected: RetroAchievement
 RA Toolkit attaches to RetroAchievements' own markup, so a site redesign can break individual features. When that happens:
 
 1. Update the script (**Tampermonkey → Utilities → Check for userscript updates**) and hard refresh with `Ctrl+Shift+R`
-2. Turn on **debug logging** in [Settings](Settings-Panel) and check the browser console for `[RA Toolkit]` messages
+2. Open the browser console and look for `[RA Toolkit]` messages — the script logs what it injects and any failure it hits
 3. [Open an issue](https://github.com/WelingtonMonteiro/ra-toolkit/issues) with the page URL and the console output
 
 ---
@@ -101,4 +101,4 @@ Make sure you're on the latest version. Version 2.4.4+ uses language-agnostic pe
 
 - **[Report a Bug](https://github.com/WelingtonMonteiro/ra-toolkit/issues)** — open an issue on GitHub
 - Include your browser name, Tampermonkey version, and the RA page URL where the issue occurs
-- Enable **debug logging** in [Settings](Settings-Panel) and include relevant console output if possible
+- Include any `[RA Toolkit]` output from the browser console. For a verbose trace, build the [debug version](Extras#structured-logging)

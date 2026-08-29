@@ -43,6 +43,12 @@ Welcome to the RA Toolkit Wiki! Here you'll find step-by-step instructions for e
 - **[Achievements Dropdown](Achievements-Dropdown)** — Restored navigation menu
 - **[Extras](Extras)** — Custom backgrounds, accent colors, mobile support
 
+## 🛠️ Working on the script?
+
+The script is built from ES modules in `src/` into `dist/RA_Toolkit.user.js`.
+See the [README](https://github.com/PixelC0d3/ra-toolkit#-project-layout) for the
+module layout, the build commands and the [debug build](Extras#structured-logging).
+
 ## ❓ Need Help?
 
 - **[FAQ & Troubleshooting](FAQ)**

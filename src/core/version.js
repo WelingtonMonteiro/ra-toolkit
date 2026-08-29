@@ -14,7 +14,9 @@ export var CHANGELOG = [
     "Settings: restored the RA Toolkit panel on the new tabbed /settings page",
     "Settings: panel is re-attached when switching settings tabs",
     "Game page: ROMs and Speedrun sections are re-attached if React re-renders the sidebar",
-    "User Stats: reads the renamed \"casual\" labels (RetroAchievements renamed softcore to casual)"
+    "User Stats: reads the renamed \"casual\" labels (RetroAchievements renamed softcore to casual)",
+    "Game Awards: fixed the Beaten tab failing to render its badges",
+    "Settings: the debug logging toggle is now only in a separate developer build"
   ]},
   { version: "2.8.2", changes: [
     "Achievement pages: linkify URLs and embed YouTube/images in achievement comments",
