@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # The published file is what Tampermonkey loads, so a syntax error here
+      # breaks every user before any test would catch it.
+      - name: Check the userscript parses
+        run: node --check RA_Toolkit.user.js
+
+      - name: Run the test suite
+        run: npm test
