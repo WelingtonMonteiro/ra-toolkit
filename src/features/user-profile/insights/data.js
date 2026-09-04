@@ -12,7 +12,7 @@ import { renderStatsCards } from './stats-cards.js';
 import { renderStreakTracker } from './streaks.js';
 
 export function fetchDashboardData(ctx) {
-  const { targetUser, apiKey, statsRow, almostSection, streakSection, rarestSection, timelineSection } = ctx;
+  const { targetUser, apiKey, gameAwardsMap, statsRow, almostSection, streakSection, rarestSection, timelineSection } = ctx;
   // Scrape console data from DOM for totalGames/totalMastered stats
   var domData = scrapeConsoleBreakdown();
 
@@ -98,7 +98,7 @@ export function fetchDashboardData(ctx) {
       mastered: domData.totalMastered,
       points: points,
       rank: rank
-    });
+    }, statsRow);
 
     // --- Almost There ---
     var almostGames = [];
@@ -124,11 +124,11 @@ export function fetchDashboardData(ctx) {
       almostGames.sort(function (a, b) { return b.pct - a.pct; });
       almostGames = almostGames.slice(0, 5);
     }
-    renderAlmostThere(almostGames);
+    renderAlmostThere(almostGames, almostSection);
 
     // --- Streak Tracker (uses yearly data for better accuracy) ---
     if (yearlyAchievements && yearlyAchievements.length > 0) {
-      renderStreakTracker(yearlyAchievements);
+      renderStreakTracker(yearlyAchievements, streakSection);
     } else {
       streakSection.querySelector('.enhanced-streak-content').innerHTML =
         '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load streak data.</div>';
@@ -136,7 +136,7 @@ export function fetchDashboardData(ctx) {
 
     // --- Rarest Achievements (30-day data) ---
     if (recentAchievements && Array.isArray(recentAchievements)) {
-      renderRarestAchievements(recentAchievements);
+      renderRarestAchievements(recentAchievements, rarestSection);
     } else {
       rarestSection.querySelector('.enhanced-rare-list').innerHTML =
         '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load rarity data.</div>';
@@ -190,7 +190,7 @@ export function fetchDashboardData(ctx) {
     }
 
     if (yearlyAchievements && yearlyAchievements.length > 0) {
-      renderActivityTimeline(yearlyAchievements, masteredDayMap, beatenDayMap);
+      renderActivityTimeline(yearlyAchievements, masteredDayMap, beatenDayMap, timelineSection);
     } else {
       timelineSection.querySelector('.enhanced-timeline-content').innerHTML =
         '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load activity data.</div>';

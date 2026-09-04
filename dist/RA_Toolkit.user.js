@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.9.1
+// @version      2.9.2
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -201,13 +201,22 @@
   function parseHtml(htmlString) {
     return domParser.parseFromString(htmlString, "text/html");
   }
+  function parseXml(xmlString) {
+    return domParser.parseFromString(xmlString, "text/xml");
+  }
   function escapeHtml(str) {
     return String(str === null || str === void 0 ? "" : str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
 
   // src/core/version.js
-  var CURRENT_VERSION = "2.9.1";
+  var CURRENT_VERSION = "2.9.2";
   var CHANGELOG = [
+    { version: "2.9.2", changes: [
+      "Profile: fixed the Player Insights dashboard failing to load (stats, Almost There, streaks, rarest and the activity timeline stayed empty)",
+      "Profile: Beaten/Mastered labels are back on the paginated games list",
+      "Game page: fixed the arcade ROM search on Final Burn Neo and the RomsFun source",
+      "Profile: fixed the console icons on the games list"
+    ] },
     { version: "2.9.0", changes: [
       "Settings: restored the RA Toolkit panel on the new tabbed /settings page",
       "Settings: panel is re-attached when switching settings tabs",
@@ -1439,7 +1448,7 @@
 
   // src/features/game-page/rom-sources/archive.js
   function searchArcade(ctx) {
-    const { gameTitle, consoleName, results, resultsDlcs, collection, compare: compare2, refinedCompare: refinedCompare2 } = ctx;
+    const { gameTitle, consoleName, tag, results, resultsDlcs, collection, compare: compare2, refinedCompare: refinedCompare2 } = ctx;
     var mainDir = "//archive.org/download/2020_01_06_fbn/roms/arcade.zip/arcade%2F";
     var datDir = "https://raw.githubusercontent.com/libretro/FBNeo/master/dats/FinalBurn%20Neo%20(ClrMame%20Pro%20XML%2C%20Arcade%20only).dat";
     return gmFetch(datDir).then(function(response) {
@@ -1696,6 +1705,40 @@
   }
 
   // src/features/game-page/rom-sources/romsfun.js
+  var romsfunConsoleSlug = {
+    [RAConsole.SNES]: "super-nintendo",
+    [RAConsole.NES]: "nintendo-nes",
+    [RAConsole.GAMEBOY]: "game-boy",
+    [RAConsole.GAMEBOYCOLOR]: "game-boy-color",
+    [RAConsole.GAMEBOYADVANCE]: "game-boy-advance",
+    [RAConsole.NINTENDO64]: "nintendo-64",
+    [RAConsole.GAMECUBE]: "gamecube",
+    [RAConsole.NINTENDODS]: "nintendo-ds",
+    [RAConsole.NINTENDODSI]: "nintendo-dsi",
+    [RAConsole.PS1]: "playstation",
+    [RAConsole.PS2]: "playstation-2",
+    [RAConsole.PSP]: "psp",
+    [RAConsole.MEGADRIVE]: "sega-genesis",
+    [RAConsole.MASTERSYSTEM]: "sega-master-system",
+    [RAConsole.GAMEGEAR]: "game-gear",
+    [RAConsole.SATURN]: "sega-saturn",
+    [RAConsole.DREAMCAST]: "dreamcast",
+    [RAConsole.SEGACD]: "sega-cd",
+    [RAConsole.SEGA32X]: "sega-32x",
+    [RAConsole.ATARI2600]: "atari-2600",
+    [RAConsole.ATARI7800]: "atari-7800",
+    [RAConsole.PCENGINE]: "pc-engine",
+    [RAConsole.NEOGEOPOCKET]: "neo-geo-pocket",
+    [RAConsole.VIRTUALBOY]: "virtual-boy",
+    [RAConsole.WII]: "wii",
+    [RAConsole.ARCADE]: "arcade",
+    [RAConsole.MSX]: "msx",
+    [RAConsole.P3DO]: "3do",
+    [RAConsole.COLECO]: "colecovision",
+    [RAConsole.ATARILYNX]: "atari-lynx",
+    [RAConsole.WONDERSWAN]: "wonderswan",
+    [RAConsole.POKEMINI]: "pokemon-mini"
+  };
   function searchRomsFun(ctx) {
     const { gameTitle, consoleName, results, resultsDlcs, collection, compare: compare2, refinedCompare: refinedCompare2 } = ctx;
     var searchUrl = "https://romsfun.com/wp-json/wp/v2/rom?search=" + encodeURIComponent(gameTitle) + "&per_page=10";
@@ -1938,7 +1981,7 @@
     let gameTitle = "";
     let gameId = "";
     let gameImg = "";
-    let tag2 = "";
+    let tag = "";
     const rgxTag = /~(.*?)~/g;
     try {
       await waitForElement('[data-testid="game-show"], [data-testid="sidebar"]');
@@ -1973,7 +2016,7 @@
       return;
     }
     if (gameTitle.match(rgxTag) != void 0) {
-      tag2 = rgxTag.exec(gameTitle)[1];
+      tag = rgxTag.exec(gameTitle)[1];
       gameTitle = gameTitle.replace(gameTitle.match(rgxTag) + " ", "");
     }
     if (consoleName === "") return;
@@ -2038,6 +2081,7 @@
     const romContext = {
       gameTitle,
       consoleName,
+      tag,
       results,
       resultsDlcs,
       collection,
@@ -2052,7 +2096,7 @@
           if (RAConsole[prop] === consoleName) isAvailable = true;
         }
       }
-      if (isAvailable && tag2 === "" || consoleName === RAConsole.ARCADE && tag2 !== "") {
+      if (isAvailable && tag === "" || consoleName === RAConsole.ARCADE && tag !== "") {
         getCachedRomResults(gameTitle, consoleName).then(function(cached) {
           if (cached) {
             results.length = 0;
@@ -2165,40 +2209,6 @@
         log.debug("Searching roms for this system not supported: " + consoleName);
       }
     }
-    const romsfunConsoleSlug2 = {
-      [RAConsole.SNES]: "super-nintendo",
-      [RAConsole.NES]: "nintendo-nes",
-      [RAConsole.GAMEBOY]: "game-boy",
-      [RAConsole.GAMEBOYCOLOR]: "game-boy-color",
-      [RAConsole.GAMEBOYADVANCE]: "game-boy-advance",
-      [RAConsole.NINTENDO64]: "nintendo-64",
-      [RAConsole.GAMECUBE]: "gamecube",
-      [RAConsole.NINTENDODS]: "nintendo-ds",
-      [RAConsole.NINTENDODSI]: "nintendo-dsi",
-      [RAConsole.PS1]: "playstation",
-      [RAConsole.PS2]: "playstation-2",
-      [RAConsole.PSP]: "psp",
-      [RAConsole.MEGADRIVE]: "sega-genesis",
-      [RAConsole.MASTERSYSTEM]: "sega-master-system",
-      [RAConsole.GAMEGEAR]: "game-gear",
-      [RAConsole.SATURN]: "sega-saturn",
-      [RAConsole.DREAMCAST]: "dreamcast",
-      [RAConsole.SEGACD]: "sega-cd",
-      [RAConsole.SEGA32X]: "sega-32x",
-      [RAConsole.ATARI2600]: "atari-2600",
-      [RAConsole.ATARI7800]: "atari-7800",
-      [RAConsole.PCENGINE]: "pc-engine",
-      [RAConsole.NEOGEOPOCKET]: "neo-geo-pocket",
-      [RAConsole.VIRTUALBOY]: "virtual-boy",
-      [RAConsole.WII]: "wii",
-      [RAConsole.ARCADE]: "arcade",
-      [RAConsole.MSX]: "msx",
-      [RAConsole.P3DO]: "3do",
-      [RAConsole.COLECO]: "colecovision",
-      [RAConsole.ATARILYNX]: "atari-lynx",
-      [RAConsole.WONDERSWAN]: "wonderswan",
-      [RAConsole.POKEMINI]: "pokemon-mini"
-    };
   }
 
   // src/features/settings/panel-host.js
@@ -3163,6 +3173,102 @@
     gamesDropdown.parentNode.insertBefore(achDropdown, gamesDropdown.nextSibling);
   }
 
+  // src/features/user-profile/skeletons.js
+  function renderSkeletonCards(container, count) {
+    container.innerHTML = "";
+    for (var i = 0; i < count; i++) {
+      var card = document.createElement("div");
+      card.className = "enhanced-skeleton-card";
+      card.style.animationDelay = i * 0.1 + "s";
+      card.innerHTML = '<div class="enhanced-skeleton-img"></div><div class="enhanced-skeleton-content"><div class="enhanced-skeleton-line w-60"></div><div class="enhanced-skeleton-line w-40"></div><div class="enhanced-skeleton-line w-30"></div><div class="enhanced-skeleton-bar"></div></div>';
+      container.appendChild(card);
+    }
+  }
+  function renderSkeletonBadges(container, count) {
+    container.innerHTML = "";
+    for (var i = 0; i < Math.min(count, 20); i++) {
+      var span = document.createElement("span");
+      span.className = "inline";
+      span.innerHTML = '<div style="width:48px;height:48px;border-radius:6px;background:rgba(255,255,255,0.08);animation:enhanced-skeleton-pulse 1.5s ease-in-out infinite;animation-delay:' + i * 0.05 + 's;"></div>';
+      container.appendChild(span);
+    }
+  }
+
+  // src/features/user-profile/achievements.js
+  var achievementCache = {};
+  var playerCountCache = {};
+  function clearAchievementCache() {
+    for (const key in achievementCache) delete achievementCache[key];
+    for (const key in playerCountCache) delete playerCountCache[key];
+  }
+  function fetchAndRenderAchievements(gameId, gridContainer, gameName, ctx) {
+    const { targetUser, apiKey, enableRarityIndicator } = ctx;
+    if (achievementCache[gameId]) {
+      renderAchievementBadges(achievementCache[gameId], gridContainer, gameName, playerCountCache[gameId] || 0, enableRarityIndicator);
+      return;
+    }
+    renderSkeletonBadges(gridContainer, 12);
+    var url = "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?g=" + gameId + "&u=" + encodeURIComponent(targetUser) + "&y=" + encodeURIComponent(apiKey);
+    gmFetch(url, 15e3).then(function(resp) {
+      var data = JSON.parse(resp.responseText);
+      var achievements = data.Achievements || {};
+      var numPlayers = parseInt(data.NumDistinctPlayers, 10) || 0;
+      achievementCache[gameId] = achievements;
+      playerCountCache[gameId] = numPlayers;
+      renderAchievementBadges(achievements, gridContainer, gameName, numPlayers, enableRarityIndicator);
+    }).catch(function() {
+      gridContainer.innerHTML = '<div style="color:#ef4444;grid-column:1/-1;">Failed to load achievements</div>';
+    });
+  }
+  function renderAchievementBadges(achievements, gridContainer, gameName, numPlayers, enableRarityIndicator) {
+    gridContainer.innerHTML = "";
+    var achList = Object.values(achievements);
+    var unlocked = achList.filter(function(a) {
+      return a.DateEarned || a.DateEarnedHardcore;
+    });
+    var locked = achList.filter(function(a) {
+      return !a.DateEarned && !a.DateEarnedHardcore;
+    });
+    unlocked.sort(function(a, b) {
+      var da = a.DateEarnedHardcore || a.DateEarned || "";
+      var db = b.DateEarnedHardcore || b.DateEarned || "";
+      return da > db ? -1 : da < db ? 1 : 0;
+    });
+    locked.sort(function(a, b) {
+      return (a.DisplayOrder || 0) - (b.DisplayOrder || 0);
+    });
+    var sorted = unlocked.concat(locked);
+    sorted.forEach(function(ach) {
+      var isUnlocked = !!(ach.DateEarned || ach.DateEarnedHardcore);
+      var badgeName = ach.BadgeName || "";
+      var badgeUrl = isUnlocked ? "https://media.retroachievements.org/Badge/" + badgeName + ".png" : "https://media.retroachievements.org/Badge/" + badgeName + "_lock.png";
+      var imgClass = isUnlocked ? "goldimage" : "badgeimglarge";
+      var unlockText = "";
+      if (ach.DateEarnedHardcore) {
+        unlockText = "\nUnlocked " + ach.DateEarnedHardcore + " (hardcore)";
+      } else if (ach.DateEarned) {
+        unlockText = "\nUnlocked " + ach.DateEarned;
+      }
+      var rarityText = "";
+      var borderStyle = "";
+      var numAwarded = parseInt(ach.NumAwarded, 10) || 0;
+      if (enableRarityIndicator && numPlayers > 0 && numAwarded > 0) {
+        var pct = numAwarded / numPlayers * 100;
+        var tier = getRarityTier(pct);
+        rarityText = "\n" + tier.label + " (" + pct.toFixed(1) + "% unlock rate)";
+        borderStyle = "border: 2px solid " + tier.color + "; border-radius: 8px;";
+      }
+      var titleText = ach.Title + "\n" + (ach.Description || "") + "\n" + (ach.Points || 0) + " points\n" + (gameName || "") + unlockText + rarityText;
+      var span = document.createElement("span");
+      span.className = "inline";
+      span.innerHTML = '<a class="inline-block" href="https://retroachievements.org/achievement/' + ach.ID + '" title="' + escapeHtml(titleText) + '"><img loading="lazy" decoding="async" width="48" height="48" src="' + badgeUrl + '" alt="' + escapeHtml(ach.Title || "") + '" class="' + imgClass + '"' + (borderStyle ? ' style="' + borderStyle + '"' : "") + "></a>";
+      gridContainer.appendChild(span);
+    });
+    if (sorted.length === 0) {
+      gridContainer.innerHTML = '<div style="color:#a3a3a3;grid-column:1/-1;">No achievements</div>';
+    }
+  }
+
   // src/features/user-profile/styles.js
   function injectProfileStyles() {
     if (document.getElementById("enhanced-pagination-style")) return;
@@ -3580,99 +3686,66 @@
     document.head.appendChild(style);
   }
 
-  // src/features/user-profile/skeletons.js
-  function renderSkeletonCards(container, count) {
-    container.innerHTML = "";
-    for (var i = 0; i < count; i++) {
-      var card = document.createElement("div");
-      card.className = "enhanced-skeleton-card";
-      card.style.animationDelay = i * 0.1 + "s";
-      card.innerHTML = '<div class="enhanced-skeleton-img"></div><div class="enhanced-skeleton-content"><div class="enhanced-skeleton-line w-60"></div><div class="enhanced-skeleton-line w-40"></div><div class="enhanced-skeleton-line w-30"></div><div class="enhanced-skeleton-bar"></div></div>';
-      container.appendChild(card);
-    }
-  }
-  function renderSkeletonBadges(container, count) {
-    container.innerHTML = "";
-    for (var i = 0; i < Math.min(count, 20); i++) {
-      var span = document.createElement("span");
-      span.className = "inline";
-      span.innerHTML = '<div style="width:48px;height:48px;border-radius:6px;background:rgba(255,255,255,0.08);animation:enhanced-skeleton-pulse 1.5s ease-in-out infinite;animation-delay:' + i * 0.05 + 's;"></div>';
-      container.appendChild(span);
-    }
-  }
-
-  // src/features/user-profile/achievements.js
-  var achievementCache2 = {};
-  var playerCountCache = {};
-  function fetchAndRenderAchievements(gameId, gridContainer, gameName, ctx) {
-    const { targetUser, apiKey, enableRarityIndicator } = ctx;
-    if (achievementCache2[gameId]) {
-      renderAchievementBadges(achievementCache2[gameId], gridContainer, gameName, playerCountCache[gameId] || 0, enableRarityIndicator);
-      return;
-    }
-    renderSkeletonBadges(gridContainer, 12);
-    var url = "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?g=" + gameId + "&u=" + encodeURIComponent(targetUser) + "&y=" + encodeURIComponent(apiKey);
-    gmFetch(url, 15e3).then(function(resp) {
-      var data = JSON.parse(resp.responseText);
-      var achievements = data.Achievements || {};
-      var numPlayers = parseInt(data.NumDistinctPlayers, 10) || 0;
-      achievementCache2[gameId] = achievements;
-      playerCountCache[gameId] = numPlayers;
-      renderAchievementBadges(achievements, gridContainer, gameName, numPlayers, enableRarityIndicator);
-    }).catch(function() {
-      gridContainer.innerHTML = '<div style="color:#ef4444;grid-column:1/-1;">Failed to load achievements</div>';
-    });
-  }
-  function renderAchievementBadges(achievements, gridContainer, gameName, numPlayers, enableRarityIndicator) {
-    gridContainer.innerHTML = "";
-    var achList = Object.values(achievements);
-    var unlocked = achList.filter(function(a) {
-      return a.DateEarned || a.DateEarnedHardcore;
-    });
-    var locked = achList.filter(function(a) {
-      return !a.DateEarned && !a.DateEarnedHardcore;
-    });
-    unlocked.sort(function(a, b) {
-      var da = a.DateEarnedHardcore || a.DateEarned || "";
-      var db = b.DateEarnedHardcore || b.DateEarned || "";
-      return da > db ? -1 : da < db ? 1 : 0;
-    });
-    locked.sort(function(a, b) {
-      return (a.DisplayOrder || 0) - (b.DisplayOrder || 0);
-    });
-    var sorted = unlocked.concat(locked);
-    sorted.forEach(function(ach) {
-      var isUnlocked = !!(ach.DateEarned || ach.DateEarnedHardcore);
-      var badgeName = ach.BadgeName || "";
-      var badgeUrl = isUnlocked ? "https://media.retroachievements.org/Badge/" + badgeName + ".png" : "https://media.retroachievements.org/Badge/" + badgeName + "_lock.png";
-      var imgClass = isUnlocked ? "goldimage" : "badgeimglarge";
-      var unlockText = "";
-      if (ach.DateEarnedHardcore) {
-        unlockText = "\nUnlocked " + ach.DateEarnedHardcore + " (hardcore)";
-      } else if (ach.DateEarned) {
-        unlockText = "\nUnlocked " + ach.DateEarned;
-      }
-      var rarityText = "";
-      var borderStyle = "";
-      var numAwarded = parseInt(ach.NumAwarded, 10) || 0;
-      if (enableRarityIndicator && numPlayers > 0 && numAwarded > 0) {
-        var pct = numAwarded / numPlayers * 100;
-        var tier = getRarityTier(pct);
-        rarityText = "\n" + tier.label + " (" + pct.toFixed(1) + "% unlock rate)";
-        borderStyle = "border: 2px solid " + tier.color + "; border-radius: 8px;";
-      }
-      var titleText = ach.Title + "\n" + (ach.Description || "") + "\n" + (ach.Points || 0) + " points\n" + (gameName || "") + unlockText + rarityText;
-      var span = document.createElement("span");
-      span.className = "inline";
-      span.innerHTML = '<a class="inline-block" href="https://retroachievements.org/achievement/' + ach.ID + '" title="' + escapeHtml(titleText) + '"><img loading="lazy" decoding="async" width="48" height="48" src="' + badgeUrl + '" alt="' + escapeHtml(ach.Title || "") + '" class="' + imgClass + '"' + (borderStyle ? ' style="' + borderStyle + '"' : "") + "></a>";
-      gridContainer.appendChild(span);
-    });
-    if (sorted.length === 0) {
-      gridContainer.innerHTML = '<div style="color:#a3a3a3;grid-column:1/-1;">No achievements</div>';
-    }
-  }
-
   // src/features/user-profile/consoles.js
+  var consoleIdMap = {
+    1: { s: "MD", i: "md" },
+    2: { s: "N64", i: "n64" },
+    3: { s: "SNES", i: "snes" },
+    4: { s: "GB", i: "gb" },
+    5: { s: "GBA", i: "gba" },
+    6: { s: "GBC", i: "gbc" },
+    7: { s: "NES", i: "nes" },
+    8: { s: "PCE", i: "pce" },
+    9: { s: "SCD", i: "scd" },
+    10: { s: "32X", i: "32-x" },
+    11: { s: "SMS", i: "sms" },
+    12: { s: "PS1", i: "ps1" },
+    13: { s: "Lynx", i: "lynx" },
+    14: { s: "NGP", i: "ngp" },
+    15: { s: "GG", i: "gg" },
+    16: { s: "GC", i: "gc" },
+    17: { s: "JAG", i: "jag" },
+    18: { s: "DS", i: "ds" },
+    19: { s: "Wii", i: "wii" },
+    20: { s: "WiiU", i: "wii-u" },
+    21: { s: "PS2", i: "ps2" },
+    22: { s: "Xbox", i: "xbox" },
+    23: { s: "MO2", i: "mo-2" },
+    24: { s: "MINI", i: "mini" },
+    25: { s: "2600", i: "2600" },
+    27: { s: "ARC", i: "arc" },
+    28: { s: "VB", i: "vb" },
+    29: { s: "MSX", i: "msx" },
+    33: { s: "SG1K", i: "sg-1-k" },
+    37: { s: "CPC", i: "cpc" },
+    38: { s: "A2", i: "a2" },
+    39: { s: "SAT", i: "sat" },
+    40: { s: "DC", i: "dc" },
+    41: { s: "PSP", i: "psp" },
+    43: { s: "3DO", i: "3-do" },
+    44: { s: "CV", i: "cv" },
+    45: { s: "INTV", i: "intv" },
+    46: { s: "VECT", i: "vect" },
+    47: { s: "80/88", i: "8088" },
+    49: { s: "PC-FX", i: "pc-fx" },
+    51: { s: "7800", i: "7800" },
+    53: { s: "WS", i: "ws" },
+    56: { s: "NGCD", i: "ngcd" },
+    57: { s: "CHF", i: "chf" },
+    63: { s: "WSV", i: "wsv" },
+    69: { s: "DUCK", i: "duck" },
+    71: { s: "ARD", i: "ard" },
+    72: { s: "WASM4", i: "wasm-4" },
+    73: { s: "A2001", i: "a2001" },
+    74: { s: "VC4000", i: "vc-4000" },
+    75: { s: "ELEK", i: "elek" },
+    76: { s: "PCCD", i: "pccd" },
+    77: { s: "JCD", i: "jcd" },
+    78: { s: "DSi", i: "dsi" },
+    80: { s: "UZE", i: "uze" },
+    81: { s: "FDS", i: "fds" },
+    102: { s: "EXE", i: "exe" }
+  };
   function getConsoleInfo(consoleId) {
     var entry = consoleIdMap[consoleId];
     if (entry) {
@@ -3686,7 +3759,7 @@
 
   // src/features/user-profile/game-list.js
   function renderGames(games, ctx) {
-    const { targetUser } = ctx;
+    const { targetUser, gamesList } = ctx;
     gamesList.innerHTML = "";
     if (games.length === 0) {
       gamesList.innerHTML = '<div style="color:#a3a3a3;padding:12px;">No more games found.</div>';
@@ -3730,7 +3803,7 @@
       }
       var consoleInfo = getConsoleInfo(game.ConsoleID);
       var awardKind = "";
-      var awardInfo = gameAwardsMap[String(game.GameID)];
+      var awardInfo = (ctx.gameAwardsMap || {})[String(game.GameID)];
       if (awardInfo) {
         awardKind = awardInfo.awardKind;
       } else if (numTotal > 0 && numHC === numTotal) {
@@ -4708,7 +4781,7 @@
 
   // src/features/user-profile/insights/data.js
   function fetchDashboardData(ctx) {
-    const { targetUser, apiKey, statsRow, almostSection, streakSection, rarestSection, timelineSection } = ctx;
+    const { targetUser, apiKey, gameAwardsMap, statsRow, almostSection, streakSection, rarestSection, timelineSection } = ctx;
     var domData = scrapeConsoleBreakdown();
     var summaryUrl = "https://retroachievements.org/API/API_GetUserSummary.php?u=" + encodeURIComponent(targetUser) + "&y=" + encodeURIComponent(apiKey) + "&g=0&a=0";
     var recentAllUrl = "https://retroachievements.org/API/API_GetUserRecentlyPlayedGames.php?u=" + encodeURIComponent(targetUser) + "&y=" + encodeURIComponent(apiKey) + "&c=50&o=0";
@@ -4784,7 +4857,7 @@
         mastered: domData.totalMastered,
         points,
         rank
-      });
+      }, statsRow);
       var almostGames = [];
       if (recentGames && Array.isArray(recentGames)) {
         recentGames.forEach(function(g) {
@@ -4809,14 +4882,14 @@
         });
         almostGames = almostGames.slice(0, 5);
       }
-      renderAlmostThere(almostGames);
+      renderAlmostThere(almostGames, almostSection);
       if (yearlyAchievements && yearlyAchievements.length > 0) {
-        renderStreakTracker(yearlyAchievements);
+        renderStreakTracker(yearlyAchievements, streakSection);
       } else {
         streakSection.querySelector(".enhanced-streak-content").innerHTML = '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load streak data.</div>';
       }
       if (recentAchievements && Array.isArray(recentAchievements)) {
-        renderRarestAchievements(recentAchievements);
+        renderRarestAchievements(recentAchievements, rarestSection);
       } else {
         rarestSection.querySelector(".enhanced-rare-list").innerHTML = '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load rarity data.</div>';
       }
@@ -4860,7 +4933,7 @@
         });
       }
       if (yearlyAchievements && yearlyAchievements.length > 0) {
-        renderActivityTimeline(yearlyAchievements, masteredDayMap, beatenDayMap);
+        renderActivityTimeline(yearlyAchievements, masteredDayMap, beatenDayMap, timelineSection);
       } else {
         timelineSection.querySelector(".enhanced-timeline-content").innerHTML = '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load activity data.</div>';
       }
@@ -5020,11 +5093,11 @@
     var totalLoaded = -1;
     var highestKnownPage = 1;
     var lastKnownHasMore = true;
-    var gamesList2 = document.createElement("div");
-    gamesList2.className = "enhanced-games-list";
+    var gamesList = document.createElement("div");
+    gamesList.className = "enhanced-games-list";
     var paginationDiv = document.createElement("div");
     paginationDiv.id = "enhanced-pagination";
-    componentRoot.appendChild(gamesList2);
+    componentRoot.appendChild(gamesList);
     componentRoot.appendChild(paginationDiv);
     var originalHeadingText = recentH2.textContent.trim();
     var perPageWrapper = document.createElement("div");
@@ -5045,7 +5118,7 @@
       ITEMS_PER_PAGE = parseInt(perPageSelect.value, 10);
       highestKnownPage = 1;
       lastKnownHasMore = true;
-      achievementCache = {};
+      clearAchievementCache();
       doLoadPage(0);
     });
     perPageWrapper.appendChild(perPageLabel);
@@ -5083,76 +5156,18 @@
     rarestSection.className = "enhanced-dashboard-section";
     rarestSection.innerHTML = '<div class="enhanced-dashboard-section-title">💎 Rarest Achievements</div><div class="enhanced-rare-list"><div class="enhanced-dashboard-skeleton" style="height:42px;margin-bottom:6px;"></div><div class="enhanced-dashboard-skeleton" style="height:42px;margin-bottom:6px;animation-delay:0.1s;"></div><div class="enhanced-dashboard-skeleton" style="height:42px;animation-delay:0.2s;"></div></div>';
     dashboardDiv.appendChild(rarestSection);
+    var gameAwardsMap = {};
     renderProgressionDashboard();
     fetchDashboardData({
       targetUser,
       apiKey,
+      gameAwardsMap,
       statsRow,
       almostSection,
       streakSection,
       rarestSection,
       timelineSection
     });
-    var consoleIdMap2 = {
-      1: { s: "MD", i: "md" },
-      2: { s: "N64", i: "n64" },
-      3: { s: "SNES", i: "snes" },
-      4: { s: "GB", i: "gb" },
-      5: { s: "GBA", i: "gba" },
-      6: { s: "GBC", i: "gbc" },
-      7: { s: "NES", i: "nes" },
-      8: { s: "PCE", i: "pce" },
-      9: { s: "SCD", i: "scd" },
-      10: { s: "32X", i: "32-x" },
-      11: { s: "SMS", i: "sms" },
-      12: { s: "PS1", i: "ps1" },
-      13: { s: "Lynx", i: "lynx" },
-      14: { s: "NGP", i: "ngp" },
-      15: { s: "GG", i: "gg" },
-      16: { s: "GC", i: "gc" },
-      17: { s: "JAG", i: "jag" },
-      18: { s: "DS", i: "ds" },
-      19: { s: "Wii", i: "wii" },
-      20: { s: "WiiU", i: "wii-u" },
-      21: { s: "PS2", i: "ps2" },
-      22: { s: "Xbox", i: "xbox" },
-      23: { s: "MO2", i: "mo-2" },
-      24: { s: "MINI", i: "mini" },
-      25: { s: "2600", i: "2600" },
-      27: { s: "ARC", i: "arc" },
-      28: { s: "VB", i: "vb" },
-      29: { s: "MSX", i: "msx" },
-      33: { s: "SG1K", i: "sg-1-k" },
-      37: { s: "CPC", i: "cpc" },
-      38: { s: "A2", i: "a2" },
-      39: { s: "SAT", i: "sat" },
-      40: { s: "DC", i: "dc" },
-      41: { s: "PSP", i: "psp" },
-      43: { s: "3DO", i: "3-do" },
-      44: { s: "CV", i: "cv" },
-      45: { s: "INTV", i: "intv" },
-      46: { s: "VECT", i: "vect" },
-      47: { s: "80/88", i: "8088" },
-      49: { s: "PC-FX", i: "pc-fx" },
-      51: { s: "7800", i: "7800" },
-      53: { s: "WS", i: "ws" },
-      56: { s: "NGCD", i: "ngcd" },
-      57: { s: "CHF", i: "chf" },
-      63: { s: "WSV", i: "wsv" },
-      69: { s: "DUCK", i: "duck" },
-      71: { s: "ARD", i: "ard" },
-      72: { s: "WASM4", i: "wasm-4" },
-      73: { s: "A2001", i: "a2001" },
-      74: { s: "VC4000", i: "vc-4000" },
-      75: { s: "ELEK", i: "elek" },
-      76: { s: "PCCD", i: "pccd" },
-      77: { s: "JCD", i: "jcd" },
-      78: { s: "DSi", i: "dsi" },
-      80: { s: "UZE", i: "uze" },
-      81: { s: "FDS", i: "fds" },
-      102: { s: "EXE", i: "exe" }
-    };
-    var gameAwardsMap2 = {};
     const paginatorContext = {
       get itemsPerPage() {
         return ITEMS_PER_PAGE;
@@ -5177,25 +5192,25 @@
       currentOffset = offset;
       if (offset === 0 && ITEMS_PER_PAGE === 5) {
         existingList.style.display = "";
-        gamesList2.innerHTML = "";
+        gamesList.innerHTML = "";
         recentH2.textContent = originalHeadingText;
         renderPaginator(paginationDiv, 0, true, paginatorContext);
         return;
       }
       existingList.style.display = "none";
-      renderSkeletonCards(gamesList2, ITEMS_PER_PAGE);
+      renderSkeletonCards(gamesList, ITEMS_PER_PAGE);
       var url = "https://retroachievements.org/API/API_GetUserRecentlyPlayedGames.php?u=" + encodeURIComponent(targetUser) + "&y=" + encodeURIComponent(apiKey) + "&c=" + ITEMS_PER_PAGE + "&o=" + offset;
       gmFetch(url, 15e3).then(function(resp) {
         var games = JSON.parse(resp.responseText);
         var hasMore = games.length === ITEMS_PER_PAGE;
-        renderGames(games, { targetUser, apiKey, enableRarityIndicator });
+        renderGames(games, { targetUser, apiKey, enableRarityIndicator, gameAwardsMap, gamesList });
         renderPaginator(paginationDiv, offset, hasMore, paginatorContext);
         if (games.length > 0) {
           recentH2.textContent = "Recently Played Games";
         }
         recentH2.scrollIntoView({ behavior: "smooth", block: "start" });
       }).catch(function(err) {
-        gamesList2.innerHTML = '<div style="color:#ef4444;padding:12px;">Failed to load games: ' + escapeHtml(err.message) + "</div>";
+        gamesList.innerHTML = '<div style="color:#ef4444;padding:12px;">Failed to load games: ' + escapeHtml(err.message) + "</div>";
       });
     }
     renderPaginator(paginationDiv, 0, true, paginatorContext);

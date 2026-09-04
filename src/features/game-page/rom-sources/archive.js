@@ -2,7 +2,7 @@
  * archive.org collections: FB Neo, No-Intro 2016, generic and PSP DLC.
  */
 
-import { parseHtml } from '../../../core/dom.js';
+import { parseHtml, parseXml } from '../../../core/dom.js';
 import { gmFetch } from '../../../core/gm.js';
 import { log } from '../../../core/log.js';
 import { RAConsole } from '../consoles.js';
@@ -11,7 +11,7 @@ import { RAConsole } from '../consoles.js';
 //       Arcade Search Function
 // =========================================
 export function searchArcade(ctx) {
-  const { gameTitle, consoleName, results, resultsDlcs, collection, compare, refinedCompare } = ctx;
+  const { gameTitle, consoleName, tag, results, resultsDlcs, collection, compare, refinedCompare } = ctx;
 
   var mainDir = "//archive.org/download/2020_01_06_fbn/roms/arcade.zip/arcade%2F";
   var datDir = "https://raw.githubusercontent.com/libretro/FBNeo/master/dats/FinalBurn%20Neo%20(ClrMame%20Pro%20XML%2C%20Arcade%20only).dat";

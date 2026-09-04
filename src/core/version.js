@@ -7,9 +7,15 @@ import { escapeHtml } from './dom.js';
 // =========================================
 //   Changelog Popup (after version update)
 // =========================================
-export var CURRENT_VERSION = "2.9.1";
+export var CURRENT_VERSION = "2.9.2";
 
 export var CHANGELOG = [
+  { version: "2.9.2", changes: [
+    "Profile: fixed the Player Insights dashboard failing to load (stats, Almost There, streaks, rarest and the activity timeline stayed empty)",
+    "Profile: Beaten/Mastered labels are back on the paginated games list",
+    "Game page: fixed the arcade ROM search on Final Burn Neo and the RomsFun source",
+    "Profile: fixed the console icons on the games list"
+  ]},
   { version: "2.9.0", changes: [
     "Settings: restored the RA Toolkit panel on the new tabbed /settings page",
     "Settings: panel is re-attached when switching settings tabs",

@@ -210,6 +210,7 @@ export async function renderGamePage(config) {
   const romContext = {
     gameTitle: gameTitle,
     consoleName: consoleName,
+    tag: tag,
     results: results,
     resultsDlcs: resultsDlcs,
     collection: collection,
@@ -376,40 +377,6 @@ export async function renderGamePage(config) {
   // =========================================
   //       RomsFun Search Function
   // =========================================
-  const romsfunConsoleSlug = {
-    [RAConsole.SNES]: "super-nintendo",
-    [RAConsole.NES]: "nintendo-nes",
-    [RAConsole.GAMEBOY]: "game-boy",
-    [RAConsole.GAMEBOYCOLOR]: "game-boy-color",
-    [RAConsole.GAMEBOYADVANCE]: "game-boy-advance",
-    [RAConsole.NINTENDO64]: "nintendo-64",
-    [RAConsole.GAMECUBE]: "gamecube",
-    [RAConsole.NINTENDODS]: "nintendo-ds",
-    [RAConsole.NINTENDODSI]: "nintendo-dsi",
-    [RAConsole.PS1]: "playstation",
-    [RAConsole.PS2]: "playstation-2",
-    [RAConsole.PSP]: "psp",
-    [RAConsole.MEGADRIVE]: "sega-genesis",
-    [RAConsole.MASTERSYSTEM]: "sega-master-system",
-    [RAConsole.GAMEGEAR]: "game-gear",
-    [RAConsole.SATURN]: "sega-saturn",
-    [RAConsole.DREAMCAST]: "dreamcast",
-    [RAConsole.SEGACD]: "sega-cd",
-    [RAConsole.SEGA32X]: "sega-32x",
-    [RAConsole.ATARI2600]: "atari-2600",
-    [RAConsole.ATARI7800]: "atari-7800",
-    [RAConsole.PCENGINE]: "pc-engine",
-    [RAConsole.NEOGEOPOCKET]: "neo-geo-pocket",
-    [RAConsole.VIRTUALBOY]: "virtual-boy",
-    [RAConsole.WII]: "wii",
-    [RAConsole.ARCADE]: "arcade",
-    [RAConsole.MSX]: "msx",
-    [RAConsole.P3DO]: "3do",
-    [RAConsole.COLECO]: "colecovision",
-    [RAConsole.ATARILYNX]: "atari-lynx",
-    [RAConsole.WONDERSWAN]: "wonderswan",
-    [RAConsole.POKEMINI]: "pokemon-mini",
-  };
 
 
   // =========================================
