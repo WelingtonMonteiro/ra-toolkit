@@ -13,6 +13,13 @@ import { renderSkeletonBadges } from './skeletons.js';
 const achievementCache = {};
 const playerCountCache = {};
 
+// Dropped when the page size changes, so a new page refetches with the new
+// rarity settings instead of replaying stale badges.
+export function clearAchievementCache() {
+  for (const key in achievementCache) delete achievementCache[key];
+  for (const key in playerCountCache) delete playerCountCache[key];
+}
+
 export function fetchAndRenderAchievements(gameId, gridContainer, gameName, ctx) {
   const { targetUser, apiKey, enableRarityIndicator } = ctx;
   if (achievementCache[gameId]) {

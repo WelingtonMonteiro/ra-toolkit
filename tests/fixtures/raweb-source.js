@@ -10,8 +10,8 @@
 
 export const rawebRef = {
   repo: 'RetroAchievements/RAWeb',
-  commit: 'd30af5422',
-  committedAt: '2026-08-26',
+  commit: '730359907',
+  committedAt: '2026-08-30',
 };
 
 /** Legacy web API endpoints present in public/API at the ref above. */

@@ -17,3 +17,7 @@ node_modules/
 
 # Private debug build (npm run build:debug) — dist/RA_Toolkit.user.js is committed
 dist/RA_Toolkit.debug.user.js
+
+# Claude Code local config
+.claude/
+CLAUDE.md

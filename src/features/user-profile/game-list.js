@@ -7,7 +7,7 @@ import { fetchAndRenderAchievements } from './achievements.js';
 import { getConsoleInfo } from './consoles.js';
 
 export function renderGames(games, ctx) {
-  const { targetUser } = ctx;
+  const { targetUser, gamesList } = ctx;
   gamesList.innerHTML = '';
   if (games.length === 0) {
     gamesList.innerHTML = '<div style="color:#a3a3a3;padding:12px;">No more games found.</div>';
@@ -66,7 +66,7 @@ export function renderGames(games, ctx) {
 
     // Determine award state — prefer gameAwardsMap (accurate), fallback to progress inference
     var awardKind = '';
-    var awardInfo = gameAwardsMap[String(game.GameID)];
+    var awardInfo = (ctx.gameAwardsMap || {})[String(game.GameID)];
     if (awardInfo) {
       awardKind = awardInfo.awardKind;
     } else if (numTotal > 0 && numHC === numTotal) {

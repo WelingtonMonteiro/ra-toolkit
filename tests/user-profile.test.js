@@ -140,3 +140,102 @@ describe('progression status scraping', () => {
     expect(labels.join(' ')).not.toMatch(/\bTotal\b.*console/i);
   });
 });
+
+/**
+ * The dashboard renders into elements created by initUserPagination
+ * (src/features/user-profile/index.js) and passed down as ctx. Every render
+ * function takes its target element as an argument — a call site that forgets
+ * it fails with "Cannot set properties of undefined (setting 'innerHTML')"
+ * and the whole dashboard collapses into "Failed to load dashboard".
+ */
+describe('player insights dashboard', () => {
+  // Mirrors the day arithmetic in insights/streaks.js so the fixture lines up
+  // with the streak window regardless of the machine's timezone.
+  function dayStamp(daysAgo) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - daysAgo);
+    return d.toISOString().substring(0, 10) + ' 12:00:00';
+  }
+
+  function respondWith(payloads) {
+    return (options) => {
+      const endpoint = Object.keys(payloads).find((name) => options.url.includes(name));
+      if (!endpoint) return null;
+      return { responseText: JSON.stringify(payloads[endpoint]) };
+    };
+  }
+
+  const fullPayloads = {
+    'API_GetUserSummary.php': { TotalPoints: 12345, Rank: 678 },
+    'API_GetUserRecentlyPlayedGames.php': [
+      { GameID: 11, Title: 'Chrono Trigger', ImageIcon: '/Images/11.png', NumAchieved: 9, NumPossibleAchievements: 10 },
+      { GameID: 22, Title: 'Barely Started', ImageIcon: '/Images/22.png', NumAchieved: 1, NumPossibleAchievements: 40 },
+    ],
+    'API_GetUserRecentAchievements.php': [
+      { AchievementID: 1, Title: 'The Hard One', GameTitle: 'Chrono Trigger', Points: 10, TrueRatio: 90, BadgeURL: '/Badge/1.png' },
+      { AchievementID: 2, Title: 'The Easy One', GameTitle: 'Chrono Trigger', Points: 10, TrueRatio: 12, BadgeURL: '/Badge/2.png' },
+    ],
+    'API_GetUserAwards.php': {
+      VisibleUserAwards: [
+        { AwardType: 'Mastery/Completion', AwardData: '11', AwardDataExtra: 1, AwardedAt: new Date().toISOString() },
+      ],
+    },
+    'API_GetAchievementsEarnedBetween.php': [
+      { AchievementID: 1, Date: dayStamp(0), HardcoreMode: 1, Points: 10, TrueRatio: 90 },
+      { AchievementID: 2, Date: dayStamp(1), HardcoreMode: 1, Points: 10, TrueRatio: 12 },
+      { AchievementID: 3, Date: dayStamp(2), HardcoreMode: 1, Points: 5, TrueRatio: 8 },
+    ],
+  };
+
+  async function renderDashboard(respond) {
+    ({ api } = await loadToolkit({
+      url: 'https://retroachievements.org/user/Welington',
+      store: { lastSeenVersion: currentVersion(), raApiKey: 'test-key' },
+      respond,
+    }));
+    document.body.innerHTML = userProfilePage();
+    navigate('/user/Welington');
+    await api.initUserPagination();
+  }
+
+  it('fills every section instead of collapsing into the failure message', async () => {
+    await renderDashboard(respondWith(fullPayloads));
+
+    await waitFor(() => document.querySelector('.enhanced-almost-item'), { timeout: 3000 });
+
+    const statsRow = document.querySelector('.enhanced-stats-row');
+    expect(statsRow.textContent).not.toContain('Failed to load dashboard');
+    expect(statsRow.textContent).toContain('Rank 678');
+
+    // Only the game past 50% shows up, with the remaining count spelled out.
+    const almost = document.querySelectorAll('.enhanced-almost-item');
+    expect(almost).toHaveLength(1);
+    expect(almost[0].textContent).toContain('Chrono Trigger');
+    expect(almost[0].textContent).toContain('1 achievement remaining (90%)');
+
+    // Three consecutive days ending today.
+    expect(document.querySelector('.enhanced-streak-big').textContent).toBe('3');
+
+    // Sorted by TrueRatio, so the rarest unlock leads.
+    const rarest = document.querySelectorAll('.enhanced-rare-item');
+    expect(rarest[0].textContent).toContain('The Hard One');
+    expect(rarest[0].textContent).toContain('x9.0');
+
+    expect(document.querySelector('.enhanced-timeline-content').children.length).toBeGreaterThan(0);
+  });
+
+  it('degrades to per-section empty states when the API gives nothing back', async () => {
+    await renderDashboard(() => null);
+
+    await waitFor(() => document.querySelector('.enhanced-almost-list').textContent.trim(), { timeout: 3000 });
+
+    const dashboard = document.querySelector('.enhanced-stats-row').parentElement;
+    expect(dashboard.textContent).not.toContain('Failed to load dashboard');
+
+    expect(document.querySelector('.enhanced-almost-list').textContent).toContain('No games close to mastery found.');
+    expect(document.querySelector('.enhanced-streak-content').textContent).toContain('Could not load streak data.');
+    expect(document.querySelector('.enhanced-rare-list').textContent).toContain('Could not load rarity data.');
+    expect(document.querySelector('.enhanced-timeline-content').textContent).toContain('Could not load activity data.');
+  });
+});
