@@ -194,12 +194,16 @@ export async function initUserPagination() {
   var rarestSection = document.createElement('div');
   rarestSection.className = 'enhanced-dashboard-section';
   rarestSection.innerHTML =
-    '<div class="enhanced-dashboard-section-title">💎 Rarest Achievements</div>'
+    '<div class="enhanced-dashboard-section-title">'
+      + '<span>💎 Rarest Achievements</span>'
+      + '<div id="enhanced-rare-sort" style="margin-left:auto;"></div>'
+    + '</div>'
     + '<div class="enhanced-rare-list">'
       + '<div class="enhanced-dashboard-skeleton" style="height:42px;margin-bottom:6px;"></div>'
       + '<div class="enhanced-dashboard-skeleton" style="height:42px;margin-bottom:6px;animation-delay:0.1s;"></div>'
       + '<div class="enhanced-dashboard-skeleton" style="height:42px;animation-delay:0.2s;"></div>'
-    + '</div>';
+    + '</div>'
+    + '<div id="enhanced-rare-pagination"></div>';
   dashboardDiv.appendChild(rarestSection);
 
 
@@ -219,6 +223,7 @@ export async function initUserPagination() {
   fetchDashboardData({
     targetUser: targetUser,
     apiKey: apiKey,
+    enableRarityIndicator: enableRarityIndicator,
     gameAwardsMap: gameAwardsMap,
     statsRow: statsRow,
     almostSection: almostSection,

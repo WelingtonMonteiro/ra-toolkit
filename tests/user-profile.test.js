@@ -172,19 +172,17 @@ describe('player insights dashboard', () => {
       { GameID: 11, Title: 'Chrono Trigger', ImageIcon: '/Images/11.png', NumAchieved: 9, NumPossibleAchievements: 10 },
       { GameID: 22, Title: 'Barely Started', ImageIcon: '/Images/22.png', NumAchieved: 1, NumPossibleAchievements: 40 },
     ],
-    'API_GetUserRecentAchievements.php': [
-      { AchievementID: 1, Title: 'The Hard One', GameTitle: 'Chrono Trigger', Points: 10, TrueRatio: 90, BadgeURL: '/Badge/1.png' },
-      { AchievementID: 2, Title: 'The Easy One', GameTitle: 'Chrono Trigger', Points: 10, TrueRatio: 12, BadgeURL: '/Badge/2.png' },
-    ],
     'API_GetUserAwards.php': {
       VisibleUserAwards: [
         { AwardType: 'Mastery/Completion', AwardData: '11', AwardDataExtra: 1, AwardedAt: new Date().toISOString() },
       ],
     },
+    // Also doubles as the "rarest achievements" source (whole account
+    // history), so it carries the display fields that endpoint needs too.
     'API_GetAchievementsEarnedBetween.php': [
-      { AchievementID: 1, Date: dayStamp(0), HardcoreMode: 1, Points: 10, TrueRatio: 90 },
-      { AchievementID: 2, Date: dayStamp(1), HardcoreMode: 1, Points: 10, TrueRatio: 12 },
-      { AchievementID: 3, Date: dayStamp(2), HardcoreMode: 1, Points: 5, TrueRatio: 8 },
+      { AchievementID: 1, Title: 'The Hard One', GameTitle: 'Chrono Trigger', BadgeURL: '/Badge/1.png', Date: dayStamp(0), HardcoreMode: 1, Points: 10, TrueRatio: 90 },
+      { AchievementID: 2, Title: 'The Easy One', GameTitle: 'Chrono Trigger', BadgeURL: '/Badge/2.png', Date: dayStamp(1), HardcoreMode: 1, Points: 10, TrueRatio: 12 },
+      { AchievementID: 3, Title: 'The Middle One', GameTitle: 'Chrono Trigger', BadgeURL: '/Badge/3.png', Date: dayStamp(2), HardcoreMode: 1, Points: 5, TrueRatio: 8 },
     ],
   };
 

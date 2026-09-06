@@ -12,7 +12,7 @@ import { renderStatsCards } from './stats-cards.js';
 import { renderStreakTracker } from './streaks.js';
 
 export function fetchDashboardData(ctx) {
-  const { targetUser, apiKey, gameAwardsMap, statsRow, almostSection, streakSection, rarestSection, timelineSection } = ctx;
+  const { targetUser, apiKey, enableRarityIndicator, gameAwardsMap, statsRow, almostSection, streakSection, rarestSection, timelineSection } = ctx;
   // Scrape console data from DOM for totalGames/totalMastered stats
   var domData = scrapeConsoleBreakdown();
 
@@ -25,11 +25,6 @@ export function fetchDashboardData(ctx) {
     + '?u=' + encodeURIComponent(targetUser)
     + '&y=' + encodeURIComponent(apiKey)
     + '&c=50&o=0';
-
-  var recentAchUrl = 'https://retroachievements.org/API/API_GetUserRecentAchievements.php'
-    + '?u=' + encodeURIComponent(targetUser)
-    + '&y=' + encodeURIComponent(apiKey)
-    + '&m=43200'; // 30 days in minutes
 
   var awardsUrl = 'https://retroachievements.org/API/API_GetUserAwards.php'
     + '?u=' + encodeURIComponent(targetUser)
@@ -51,11 +46,10 @@ export function fetchDashboardData(ctx) {
     );
   }
 
-  // Fetch summary + recent games + recent achievements (30d) + awards + yearly chunks in parallel
+  // Fetch summary + recent games + awards + yearly chunks in parallel
   var corePromises = [
     gmFetch(summaryUrl, 15000).then(function (r) { return JSON.parse(r.responseText); }).catch(function () { return null; }),
     gmFetch(recentAllUrl, 15000).then(function (r) { return JSON.parse(r.responseText); }).catch(function () { return null; }),
-    gmFetch(recentAchUrl, 15000).then(function (r) { return JSON.parse(r.responseText); }).catch(function () { return null; }),
     gmFetch(awardsUrl, 15000).then(function (r) { return JSON.parse(r.responseText); }).catch(function () { return null; })
   ];
   var yearlyPromises = yearlyChunkUrls.map(function (url) {
@@ -65,13 +59,12 @@ export function fetchDashboardData(ctx) {
   Promise.all(corePromises.concat(yearlyPromises)).then(function (results) {
     var summary = results[0];
     var recentGames = results[1];
-    var recentAchievements = results[2]; // 30-day data for rarest
-    var awardsData = results[3]; // user awards (mastered/beaten dates)
+    var awardsData = results[2]; // user awards (mastered/beaten dates)
 
     // Merge 4 quarterly chunks into yearlyAchievements
     var yearlyAchievements = [];
     for (var q = 0; q < 4; q++) {
-      var chunk = results[4 + q];
+      var chunk = results[3 + q];
       if (Array.isArray(chunk)) {
         yearlyAchievements = yearlyAchievements.concat(chunk);
       }
@@ -134,13 +127,19 @@ export function fetchDashboardData(ctx) {
         '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load streak data.</div>';
     }
 
-    // --- Rarest Achievements (30-day data) ---
-    if (recentAchievements && Array.isArray(recentAchievements)) {
-      renderRarestAchievements(recentAchievements, rarestSection);
-    } else {
-      rarestSection.querySelector('.enhanced-rare-list').innerHTML =
-        '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load rarity data.</div>';
-    }
+    // --- Rarest Achievements (whole account history, like the mobile app) ---
+    fetchAllTimeAchievements(targetUser, apiKey, summary).then(function (allTimeAchievements) {
+      if (allTimeAchievements && allTimeAchievements.length > 0) {
+        renderRarestAchievements(allTimeAchievements, rarestSection, {
+          targetUser: targetUser,
+          apiKey: apiKey,
+          enableRarityIndicator: enableRarityIndicator,
+        });
+      } else {
+        rarestSection.querySelector('.enhanced-rare-list').innerHTML =
+          '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load rarity data.</div>';
+      }
+    });
 
     // --- Build gameAwardsMap from awards data (for pagination Beaten/Mastered labels) ---
     var awardPriority = { 'mastered': 4, 'completed': 3, 'beaten-hardcore': 2, 'beaten-softcore': 1 };
@@ -200,5 +199,53 @@ export function fetchDashboardData(ctx) {
   }).catch(function (err) {
     log.warn('Dashboard failed: ' + err.message);
     statsRow.innerHTML = '<div style="color:#ef4444;font-size:0.8rem;grid-column:1/-1;">Failed to load dashboard</div>';
+  });
+}
+
+// Every unlock since the account was created, walked in one-year chunks
+// (mirrors the mobile app's "all time" rarest window). Falls back to the
+// last 365 days when MemberSince is missing or implausible.
+function fetchAllTimeAchievements(targetUser, apiKey, summary) {
+  var now = new Date();
+  var floor = new Date(now.getTime() - 365 * 20 * 24 * 60 * 60 * 1000);
+  var from = null;
+  if (summary && summary.MemberSince) {
+    var parsed = new Date(String(summary.MemberSince).replace(' ', 'T') + 'Z');
+    if (!isNaN(parsed.getTime())) from = parsed;
+  }
+  if (!from || from > now || from < floor) {
+    from = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+  }
+
+  var chunkUrls = [];
+  var cursor = from;
+  while (cursor < now) {
+    var next = new Date(cursor.getTime() + 365 * 24 * 60 * 60 * 1000);
+    var to = next > now ? now : next;
+    chunkUrls.push(
+      'https://retroachievements.org/API/API_GetAchievementsEarnedBetween.php'
+      + '?u=' + encodeURIComponent(targetUser)
+      + '&y=' + encodeURIComponent(apiKey)
+      + '&f=' + Math.floor(cursor.getTime() / 1000)
+      + '&t=' + Math.floor(to.getTime() / 1000)
+    );
+    cursor = to;
+  }
+
+  return Promise.all(chunkUrls.map(function (url) {
+    return gmFetch(url, 20000).then(function (r) { return JSON.parse(r.responseText); }).catch(function () { return []; });
+  })).then(function (chunks) {
+    var all = [];
+    chunks.forEach(function (chunk) {
+      if (Array.isArray(chunk)) all = all.concat(chunk);
+    });
+    // Deduplicate across overlapping chunk boundaries.
+    var seen = {};
+    return all.filter(function (a) {
+      var key = a.AchievementID + '|' + a.Date + '|' + a.HardcoreMode;
+      if (seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
   });
 }

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RA Toolkit
 // @namespace    https://github.com/WelingtonMonteiro
-// @version      2.9.2
+// @version      2.10.0
 // @description  Toolkit for RetroAchievements.org — ROMs, translations, dashboard, pagination and more. Based on Retro Enhanced by Miagui.
 // @author       Miagui / Updated by Welington
 // @match        *://retroachievements.org/*
@@ -209,8 +209,14 @@
   }
 
   // src/core/version.js
-  var CURRENT_VERSION = "2.9.2";
+  var CURRENT_VERSION = "2.10.0";
   var CHANGELOG = [
+    { version: "2.10.0", changes: [
+      "Rarest Achievements: now computed from your entire achievement history (like the mobile app), not just the last 30 days",
+      "Rarest Achievements: paginated (5 per page by default, configurable) with sort filters — Rarest first, Least rare first, Most recent",
+      "Rarest Achievements: each card now shows its unlock-rate % and rarity tier badge",
+      "Changelog popup: long changelogs now show 3 entries at a time, with a Show more / Show less toggle"
+    ] },
     { version: "2.9.2", changes: [
       "Profile: fixed the Player Insights dashboard failing to load (stats, Almost There, streaks, rarest and the activity timeline stayed empty)",
       "Profile: Beaten/Mastered labels are back on the paginated games list",
@@ -368,17 +374,54 @@
         newChanges.push(CHANGELOG[i]);
       }
       if (newChanges.length === 0) return;
-      var changesHtml = newChanges.map(function(entry) {
-        var items = entry.changes.map(function(c) {
-          return '<li style="margin:2px 0;">' + escapeHtml(c) + "</li>";
-        }).join("");
-        return '<div style="margin-bottom:10px;"><strong style="color:var(--ra-accent,#3b82f6);">v' + escapeHtml(entry.version) + '</strong><ul style="margin:4px 0 0 16px;padding:0;list-style:disc;">' + items + "</ul></div>";
-      }).join("");
+      var flatItems = [];
+      newChanges.forEach(function(entry) {
+        entry.changes.forEach(function(c) {
+          flatItems.push({ version: entry.version, text: c });
+        });
+      });
+      var PAGE_SIZE = 3;
+      var visibleCount = Math.min(PAGE_SIZE, flatItems.length);
+      function buildListHtml(count) {
+        var html = "";
+        var openVersion = null;
+        for (var i2 = 0; i2 < count; i2++) {
+          var item = flatItems[i2];
+          if (item.version !== openVersion) {
+            if (openVersion !== null) html += "</ul></div>";
+            html += '<div style="margin-bottom:10px;"><strong style="color:var(--ra-accent,#3b82f6);">v' + escapeHtml(item.version) + '</strong><ul style="margin:4px 0 0 16px;padding:0;list-style:disc;">';
+            openVersion = item.version;
+          }
+          html += '<li style="margin:2px 0;">' + escapeHtml(item.text) + "</li>";
+        }
+        if (openVersion !== null) html += "</ul></div>";
+        return html;
+      }
       var overlay = document.createElement("div");
       overlay.id = "enhanced-changelog-overlay";
       overlay.style.cssText = "position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);";
-      overlay.innerHTML = '<div style="background:var(--box-bg-color,#232323);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:24px;max-width:480px;width:90%;max-height:80vh;overflow-y:auto;color:var(--text-color,#c8c8c8);font-size:0.9rem;box-shadow:0 8px 32px rgba(0,0,0,0.5);"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;"><h3 style="margin:0;font-size:1.2rem;color:var(--heading-color,#d2d2d2);">🎮 RA Toolkit Updated!</h3><button id="enhanced-changelog-close" style="background:none;border:none;color:var(--text-color,#c8c8c8);font-size:1.4rem;cursor:pointer;padding:0 4px;line-height:1;">&times;</button></div><div style="line-height:1.5;">' + changesHtml + '</div><div style="text-align:center;margin-top:16px;"><button id="enhanced-changelog-ok" style="padding:8px 24px;border-radius:8px;border:none;background:var(--ra-accent,#3b82f6);color:#fff;font-size:0.9rem;cursor:pointer;font-weight:600;">Got it!</button></div></div>';
+      overlay.innerHTML = '<div style="background:var(--box-bg-color,#232323);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:24px;max-width:480px;width:90%;max-height:80vh;overflow-y:auto;color:var(--text-color,#c8c8c8);font-size:0.9rem;box-shadow:0 8px 32px rgba(0,0,0,0.5);"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;"><h3 style="margin:0;font-size:1.2rem;color:var(--heading-color,#d2d2d2);">🎮 RA Toolkit Updated!</h3><button id="enhanced-changelog-close" style="background:none;border:none;color:var(--text-color,#c8c8c8);font-size:1.4rem;cursor:pointer;padding:0 4px;line-height:1;">&times;</button></div><div id="enhanced-changelog-list" style="line-height:1.5;"></div><div style="text-align:center;margin-top:8px;"><button id="enhanced-changelog-toggle" style="padding:4px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:var(--ra-accent,#3b82f6);font-size:0.8rem;cursor:pointer;"></button></div><div style="text-align:center;margin-top:12px;"><button id="enhanced-changelog-ok" style="padding:8px 24px;border-radius:8px;border:none;background:var(--ra-accent,#3b82f6);color:#fff;font-size:0.9rem;cursor:pointer;font-weight:600;">Got it!</button></div></div>';
       document.body.appendChild(overlay);
+      var listEl = document.getElementById("enhanced-changelog-list");
+      var toggleBtn = document.getElementById("enhanced-changelog-toggle");
+      function renderList() {
+        listEl.innerHTML = buildListHtml(visibleCount);
+        if (flatItems.length <= PAGE_SIZE) {
+          toggleBtn.style.display = "none";
+          return;
+        }
+        toggleBtn.style.display = "";
+        if (visibleCount < flatItems.length) {
+          toggleBtn.textContent = "Show more (+" + Math.min(PAGE_SIZE, flatItems.length - visibleCount) + ")";
+        } else {
+          toggleBtn.textContent = "Show less";
+        }
+      }
+      toggleBtn.addEventListener("click", function() {
+        visibleCount = visibleCount < flatItems.length ? Math.min(visibleCount + PAGE_SIZE, flatItems.length) : Math.min(PAGE_SIZE, flatItems.length);
+        renderList();
+      });
+      renderList();
       function closePopup() {
         overlay.remove();
       }
@@ -3201,6 +3244,20 @@
     for (const key in achievementCache) delete achievementCache[key];
     for (const key in playerCountCache) delete playerCountCache[key];
   }
+  function fetchGameRarityData(gameId, targetUser, apiKey) {
+    if (achievementCache[gameId]) {
+      return Promise.resolve({ achievements: achievementCache[gameId], numPlayers: playerCountCache[gameId] || 0 });
+    }
+    var url = "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?g=" + gameId + "&u=" + encodeURIComponent(targetUser) + "&y=" + encodeURIComponent(apiKey);
+    return gmFetch(url, 15e3).then(function(resp) {
+      var data = JSON.parse(resp.responseText);
+      var achievements = data.Achievements || {};
+      var numPlayers = parseInt(data.NumDistinctPlayers, 10) || 0;
+      achievementCache[gameId] = achievements;
+      playerCountCache[gameId] = numPlayers;
+      return { achievements, numPlayers };
+    });
+  }
   function fetchAndRenderAchievements(gameId, gridContainer, gameName, ctx) {
     const { targetUser, apiKey, enableRarityIndicator } = ctx;
     if (achievementCache[gameId]) {
@@ -3208,14 +3265,8 @@
       return;
     }
     renderSkeletonBadges(gridContainer, 12);
-    var url = "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?g=" + gameId + "&u=" + encodeURIComponent(targetUser) + "&y=" + encodeURIComponent(apiKey);
-    gmFetch(url, 15e3).then(function(resp) {
-      var data = JSON.parse(resp.responseText);
-      var achievements = data.Achievements || {};
-      var numPlayers = parseInt(data.NumDistinctPlayers, 10) || 0;
-      achievementCache[gameId] = achievements;
-      playerCountCache[gameId] = numPlayers;
-      renderAchievementBadges(achievements, gridContainer, gameName, numPlayers, enableRarityIndicator);
+    fetchGameRarityData(gameId, targetUser, apiKey).then(function(data) {
+      renderAchievementBadges(data.achievements, gridContainer, gameName, data.numPlayers, enableRarityIndicator);
     }).catch(function() {
       gridContainer.innerHTML = '<div style="color:#ef4444;grid-column:1/-1;">Failed to load achievements</div>';
     });
@@ -3543,6 +3594,10 @@
     .enhanced-rare-meta {
       font-size: 0.7rem;
       color: #737373;
+    }
+    .enhanced-rare-tier {
+      margin-top: 3px;
+      min-height: 16px;
     }
     .enhanced-rare-ratio {
       font-size: 0.75rem;
@@ -4672,44 +4727,203 @@
   }
 
   // src/features/user-profile/insights/rarest.js
-  function renderRarestAchievements(achievements, rarestSection) {
+  function renderRarestAchievements(achievements, rarestSection, ctx) {
+    ctx = ctx || {};
+    var targetUser = ctx.targetUser;
+    var apiKey = ctx.apiKey;
+    var enableRarityIndicator = ctx.enableRarityIndicator;
     var list = rarestSection.querySelector(".enhanced-rare-list");
+    var paginationDiv = rarestSection.querySelector("#enhanced-rare-pagination");
+    var sortSlot = rarestSection.querySelector("#enhanced-rare-sort");
     if (!achievements || achievements.length === 0) {
       list.innerHTML = '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">No achievement data available.</div>';
+      if (paginationDiv) paginationDiv.innerHTML = "";
+      if (sortSlot) sortSlot.innerHTML = "";
       return;
     }
-    var sorted = achievements.slice().filter(function(a) {
-      return a.TrueRatio && parseInt(a.TrueRatio, 10) > 0;
-    });
-    sorted.sort(function(a, b) {
-      return (parseInt(b.TrueRatio, 10) || 0) - (parseInt(a.TrueRatio, 10) || 0);
+    function multiplierOf(a) {
+      var trueRatio = parseInt(a.TrueRatio, 10) || 0;
+      var points = parseInt(a.Points, 10) || 0;
+      return trueRatio > 0 && points > 0 ? trueRatio / points : null;
+    }
+    var base = achievements.slice().filter(function(a) {
+      return multiplierOf(a) !== null;
     });
     var seen = {};
-    sorted = sorted.filter(function(a) {
+    base = base.filter(function(a) {
       if (seen[a.AchievementID]) return false;
       seen[a.AchievementID] = true;
       return true;
     });
-    sorted = sorted.slice(0, 5);
-    if (sorted.length === 0) {
+    if (base.length === 0) {
       list.innerHTML = '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">No rarity data available.</div>';
+      if (paginationDiv) paginationDiv.innerHTML = "";
+      if (sortSlot) sortSlot.innerHTML = "";
       return;
     }
-    list.innerHTML = "";
-    sorted.forEach(function(a) {
-      var badgeUrl = a.BadgeURL || "";
-      if (badgeUrl && !badgeUrl.startsWith("http")) {
-        badgeUrl = "https://media.retroachievements.org" + badgeUrl;
+    var itemsPerPage = 5;
+    var currentPage = 1;
+    var sortMode = "rarest";
+    function sortedList() {
+      var arr = base.slice();
+      if (sortMode === "common") {
+        arr.sort(function(a, b) {
+          var byRatio = multiplierOf(a) - multiplierOf(b);
+          return byRatio !== 0 ? byRatio : (parseInt(a.TrueRatio, 10) || 0) - (parseInt(b.TrueRatio, 10) || 0);
+        });
+      } else if (sortMode === "recent") {
+        arr.sort(function(a, b) {
+          var da = a.Date || "";
+          var db = b.Date || "";
+          return da > db ? -1 : da < db ? 1 : 0;
+        });
+      } else {
+        arr.sort(function(a, b) {
+          var byRatio = multiplierOf(b) - multiplierOf(a);
+          return byRatio !== 0 ? byRatio : (parseInt(b.TrueRatio, 10) || 0) - (parseInt(a.TrueRatio, 10) || 0);
+        });
       }
-      var trueRatio = parseInt(a.TrueRatio, 10) || 0;
-      var points = parseInt(a.Points, 10) || 0;
-      var ratio = trueRatio > 0 && points > 0 ? (trueRatio / points).toFixed(1) : "—";
-      var item = document.createElement("a");
-      item.className = "enhanced-rare-item";
-      item.href = "/achievement/" + a.AchievementID;
-      item.innerHTML = '<img class="enhanced-rare-badge" src="' + escapeHtml(badgeUrl) + '" alt="" loading="lazy"><div class="enhanced-rare-info"><div class="enhanced-rare-title" title="' + escapeHtml(a.Title || "") + '">' + escapeHtml(a.Title || "") + '</div><div class="enhanced-rare-meta">' + escapeHtml(a.GameTitle || "") + " · " + points + ' pts</div></div><div class="enhanced-rare-ratio" title="TrueRatio: ' + trueRatio + " (x" + ratio + ' rarity)">x' + ratio + "</div>";
-      list.appendChild(item);
-    });
+      return arr;
+    }
+    function fillRarityBadge(tierSlot, gameId, achievementId) {
+      if (!enableRarityIndicator || !gameId) return;
+      fetchGameRarityData(gameId, targetUser, apiKey).then(function(data) {
+        var achData = (data.achievements || {})[String(achievementId)] || (data.achievements || {})[achievementId];
+        if (!achData || !data.numPlayers) return;
+        var numAwarded = parseInt(achData.NumAwarded, 10) || 0;
+        if (!numAwarded) return;
+        var pct = numAwarded / data.numPlayers * 100;
+        var tier = getRarityTier(pct);
+        var badgeStyle = "display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:4px;font-size:0.65rem;font-weight:600;letter-spacing:0.02em;white-space:nowrap;line-height:1.6;color:" + tier.color + ";background:" + tier.bg + ";border:1px solid " + tier.color + "30;";
+        var dotStyle = "width:6px;height:6px;border-radius:50%;flex-shrink:0;display:inline-block;background:" + tier.color + ";";
+        tierSlot.innerHTML = '<span style="' + badgeStyle + '"><span style="' + dotStyle + '"></span>' + tier.label + " · " + pct.toFixed(1) + "%</span>";
+      }).catch(function() {
+      });
+    }
+    function renderItems() {
+      var sorted = sortedList();
+      var totalPages = Math.max(1, Math.ceil(sorted.length / itemsPerPage));
+      if (currentPage > totalPages) currentPage = totalPages;
+      var start2 = (currentPage - 1) * itemsPerPage;
+      var pageItems = sorted.slice(start2, start2 + itemsPerPage);
+      list.innerHTML = "";
+      pageItems.forEach(function(a) {
+        var badgeUrl = a.BadgeURL || "";
+        if (badgeUrl && !badgeUrl.startsWith("http")) {
+          badgeUrl = "https://media.retroachievements.org" + badgeUrl;
+        }
+        var trueRatio = parseInt(a.TrueRatio, 10) || 0;
+        var points = parseInt(a.Points, 10) || 0;
+        var ratio = trueRatio > 0 && points > 0 ? (trueRatio / points).toFixed(1) : "—";
+        var item = document.createElement("a");
+        item.className = "enhanced-rare-item";
+        item.href = "/achievement/" + a.AchievementID;
+        item.innerHTML = '<img class="enhanced-rare-badge" src="' + escapeHtml(badgeUrl) + '" alt="" loading="lazy"><div class="enhanced-rare-info"><div class="enhanced-rare-title" title="' + escapeHtml(a.Title || "") + '">' + escapeHtml(a.Title || "") + '</div><div class="enhanced-rare-meta">' + escapeHtml(a.GameTitle || "") + " · " + points + ' pts</div><div class="enhanced-rare-tier"></div></div><div class="enhanced-rare-ratio" title="TrueRatio: ' + trueRatio + " (x" + ratio + ' rarity)">x' + ratio + "</div>";
+        list.appendChild(item);
+        fillRarityBadge(item.querySelector(".enhanced-rare-tier"), a.GameID, a.AchievementID);
+      });
+      renderPager(totalPages);
+    }
+    function renderPager(totalPages) {
+      if (!paginationDiv) return;
+      paginationDiv.innerHTML = "";
+      paginationDiv.className = "enhanced-pagination";
+      function addBtn(label, page, disabled, isActive) {
+        var btn = document.createElement("button");
+        btn.textContent = label;
+        btn.disabled = !!disabled;
+        if (isActive) btn.className = "active";
+        if (!disabled) {
+          btn.addEventListener("click", function() {
+            currentPage = page;
+            renderItems();
+          });
+        }
+        paginationDiv.appendChild(btn);
+      }
+      addBtn("First", 1, currentPage === 1, false);
+      addBtn("❮", currentPage - 1, currentPage === 1, false);
+      var startP = Math.max(1, currentPage - 2);
+      var endP = Math.min(totalPages, startP + 4);
+      if (endP - startP < 4) startP = Math.max(1, endP - 4);
+      if (startP > 1) {
+        var dots = document.createElement("span");
+        dots.className = "page-info";
+        dots.textContent = "...";
+        paginationDiv.appendChild(dots);
+      }
+      for (var p = startP; p <= endP; p++) {
+        addBtn(String(p), p, false, p === currentPage);
+      }
+      if (endP < totalPages) {
+        var dotsAfter = document.createElement("span");
+        dotsAfter.className = "page-info";
+        dotsAfter.textContent = "...";
+        paginationDiv.appendChild(dotsAfter);
+      }
+      addBtn("❯", currentPage + 1, currentPage === totalPages, false);
+      var rangeStart = (currentPage - 1) * itemsPerPage + 1;
+      var rangeEnd = Math.min(base.length, currentPage * itemsPerPage);
+      var rangeSpan = document.createElement("span");
+      rangeSpan.className = "page-info";
+      rangeSpan.style.cssText = "margin-left:8px;font-size:0.75rem;color:#a3a3a3;";
+      rangeSpan.textContent = "(" + rangeStart + "–" + rangeEnd + ")";
+      paginationDiv.appendChild(rangeSpan);
+      var perPageWrapper = document.createElement("div");
+      perPageWrapper.style.cssText = "display:inline-flex;align-items:center;gap:6px;margin-left:12px;";
+      var perPageLabel = document.createElement("label");
+      perPageLabel.textContent = "Show:";
+      perPageLabel.style.cssText = "font-size:0.75rem;color:#a3a3a3;";
+      var perPageSelect = document.createElement("select");
+      perPageSelect.style.cssText = "background:#18181b;color:#e4e4e7;border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:2px 6px;font-size:0.75rem;cursor:pointer;";
+      [5, 10, 15, 20, 30, 50].forEach(function(n) {
+        var opt = document.createElement("option");
+        opt.value = n;
+        opt.textContent = n;
+        if (n === itemsPerPage) opt.selected = true;
+        perPageSelect.appendChild(opt);
+      });
+      perPageSelect.addEventListener("change", function() {
+        itemsPerPage = parseInt(perPageSelect.value, 10);
+        currentPage = 1;
+        renderItems();
+      });
+      perPageWrapper.appendChild(perPageLabel);
+      perPageWrapper.appendChild(perPageSelect);
+      paginationDiv.appendChild(perPageWrapper);
+    }
+    function renderSortSelect() {
+      if (!sortSlot) return;
+      sortSlot.innerHTML = "";
+      var wrapper = document.createElement("div");
+      wrapper.style.cssText = "display:inline-flex;align-items:center;gap:6px;";
+      var label = document.createElement("label");
+      label.textContent = "Sort:";
+      label.style.cssText = "font-size:0.7rem;color:#a3a3a3;font-weight:400;text-transform:none;letter-spacing:normal;";
+      var select = document.createElement("select");
+      select.style.cssText = "background:#18181b;color:#e4e4e7;border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:2px 6px;font-size:0.75rem;cursor:pointer;";
+      [
+        { value: "rarest", label: "Rarest first" },
+        { value: "common", label: "Least rare first" },
+        { value: "recent", label: "Most recent" }
+      ].forEach(function(opt) {
+        var el = document.createElement("option");
+        el.value = opt.value;
+        el.textContent = opt.label;
+        if (opt.value === sortMode) el.selected = true;
+        select.appendChild(el);
+      });
+      select.addEventListener("change", function() {
+        sortMode = select.value;
+        currentPage = 1;
+        renderItems();
+      });
+      wrapper.appendChild(label);
+      wrapper.appendChild(select);
+      sortSlot.appendChild(wrapper);
+    }
+    renderSortSelect();
+    renderItems();
   }
 
   // src/features/user-profile/insights/stats-cards.js
@@ -4781,11 +4995,10 @@
 
   // src/features/user-profile/insights/data.js
   function fetchDashboardData(ctx) {
-    const { targetUser, apiKey, gameAwardsMap, statsRow, almostSection, streakSection, rarestSection, timelineSection } = ctx;
+    const { targetUser, apiKey, enableRarityIndicator, gameAwardsMap, statsRow, almostSection, streakSection, rarestSection, timelineSection } = ctx;
     var domData = scrapeConsoleBreakdown();
     var summaryUrl = "https://retroachievements.org/API/API_GetUserSummary.php?u=" + encodeURIComponent(targetUser) + "&y=" + encodeURIComponent(apiKey) + "&g=0&a=0";
     var recentAllUrl = "https://retroachievements.org/API/API_GetUserRecentlyPlayedGames.php?u=" + encodeURIComponent(targetUser) + "&y=" + encodeURIComponent(apiKey) + "&c=50&o=0";
-    var recentAchUrl = "https://retroachievements.org/API/API_GetUserRecentAchievements.php?u=" + encodeURIComponent(targetUser) + "&y=" + encodeURIComponent(apiKey) + "&m=43200";
     var awardsUrl = "https://retroachievements.org/API/API_GetUserAwards.php?u=" + encodeURIComponent(targetUser) + "&y=" + encodeURIComponent(apiKey);
     var now = Math.floor(Date.now() / 1e3);
     var oneYearAgo = now - 365 * 24 * 60 * 60;
@@ -4809,11 +5022,6 @@
       }).catch(function() {
         return null;
       }),
-      gmFetch(recentAchUrl, 15e3).then(function(r) {
-        return JSON.parse(r.responseText);
-      }).catch(function() {
-        return null;
-      }),
       gmFetch(awardsUrl, 15e3).then(function(r) {
         return JSON.parse(r.responseText);
       }).catch(function() {
@@ -4830,11 +5038,10 @@
     Promise.all(corePromises.concat(yearlyPromises)).then(function(results) {
       var summary = results[0];
       var recentGames = results[1];
-      var recentAchievements = results[2];
-      var awardsData = results[3];
+      var awardsData = results[2];
       var yearlyAchievements = [];
       for (var q2 = 0; q2 < 4; q2++) {
-        var chunk = results[4 + q2];
+        var chunk = results[3 + q2];
         if (Array.isArray(chunk)) {
           yearlyAchievements = yearlyAchievements.concat(chunk);
         }
@@ -4888,11 +5095,17 @@
       } else {
         streakSection.querySelector(".enhanced-streak-content").innerHTML = '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load streak data.</div>';
       }
-      if (recentAchievements && Array.isArray(recentAchievements)) {
-        renderRarestAchievements(recentAchievements, rarestSection);
-      } else {
-        rarestSection.querySelector(".enhanced-rare-list").innerHTML = '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load rarity data.</div>';
-      }
+      fetchAllTimeAchievements(targetUser, apiKey, summary).then(function(allTimeAchievements) {
+        if (allTimeAchievements && allTimeAchievements.length > 0) {
+          renderRarestAchievements(allTimeAchievements, rarestSection, {
+            targetUser,
+            apiKey,
+            enableRarityIndicator
+          });
+        } else {
+          rarestSection.querySelector(".enhanced-rare-list").innerHTML = '<div style="font-size:0.78rem;color:#525252;padding:4px 0;">Could not load rarity data.</div>';
+        }
+      });
       var awardPriority = { "mastered": 4, "completed": 3, "beaten-hardcore": 2, "beaten-softcore": 1 };
       if (awardsData && Array.isArray(awardsData.VisibleUserAwards)) {
         awardsData.VisibleUserAwards.forEach(function(award) {
@@ -4941,6 +5154,47 @@
     }).catch(function(err) {
       log.warn("Dashboard failed: " + err.message);
       statsRow.innerHTML = '<div style="color:#ef4444;font-size:0.8rem;grid-column:1/-1;">Failed to load dashboard</div>';
+    });
+  }
+  function fetchAllTimeAchievements(targetUser, apiKey, summary) {
+    var now = /* @__PURE__ */ new Date();
+    var floor = new Date(now.getTime() - 365 * 20 * 24 * 60 * 60 * 1e3);
+    var from = null;
+    if (summary && summary.MemberSince) {
+      var parsed = /* @__PURE__ */ new Date(String(summary.MemberSince).replace(" ", "T") + "Z");
+      if (!isNaN(parsed.getTime())) from = parsed;
+    }
+    if (!from || from > now || from < floor) {
+      from = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1e3);
+    }
+    var chunkUrls = [];
+    var cursor = from;
+    while (cursor < now) {
+      var next = new Date(cursor.getTime() + 365 * 24 * 60 * 60 * 1e3);
+      var to = next > now ? now : next;
+      chunkUrls.push(
+        "https://retroachievements.org/API/API_GetAchievementsEarnedBetween.php?u=" + encodeURIComponent(targetUser) + "&y=" + encodeURIComponent(apiKey) + "&f=" + Math.floor(cursor.getTime() / 1e3) + "&t=" + Math.floor(to.getTime() / 1e3)
+      );
+      cursor = to;
+    }
+    return Promise.all(chunkUrls.map(function(url) {
+      return gmFetch(url, 2e4).then(function(r) {
+        return JSON.parse(r.responseText);
+      }).catch(function() {
+        return [];
+      });
+    })).then(function(chunks) {
+      var all = [];
+      chunks.forEach(function(chunk) {
+        if (Array.isArray(chunk)) all = all.concat(chunk);
+      });
+      var seen = {};
+      return all.filter(function(a) {
+        var key = a.AchievementID + "|" + a.Date + "|" + a.HardcoreMode;
+        if (seen[key]) return false;
+        seen[key] = true;
+        return true;
+      });
     });
   }
 
@@ -5154,13 +5408,14 @@
     dashboardDiv.appendChild(streakSection);
     var rarestSection = document.createElement("div");
     rarestSection.className = "enhanced-dashboard-section";
-    rarestSection.innerHTML = '<div class="enhanced-dashboard-section-title">💎 Rarest Achievements</div><div class="enhanced-rare-list"><div class="enhanced-dashboard-skeleton" style="height:42px;margin-bottom:6px;"></div><div class="enhanced-dashboard-skeleton" style="height:42px;margin-bottom:6px;animation-delay:0.1s;"></div><div class="enhanced-dashboard-skeleton" style="height:42px;animation-delay:0.2s;"></div></div>';
+    rarestSection.innerHTML = '<div class="enhanced-dashboard-section-title"><span>💎 Rarest Achievements</span><div id="enhanced-rare-sort" style="margin-left:auto;"></div></div><div class="enhanced-rare-list"><div class="enhanced-dashboard-skeleton" style="height:42px;margin-bottom:6px;"></div><div class="enhanced-dashboard-skeleton" style="height:42px;margin-bottom:6px;animation-delay:0.1s;"></div><div class="enhanced-dashboard-skeleton" style="height:42px;animation-delay:0.2s;"></div></div><div id="enhanced-rare-pagination"></div>';
     dashboardDiv.appendChild(rarestSection);
     var gameAwardsMap = {};
     renderProgressionDashboard();
     fetchDashboardData({
       targetUser,
       apiKey,
+      enableRarityIndicator,
       gameAwardsMap,
       statsRow,
       almostSection,
