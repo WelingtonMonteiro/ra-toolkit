@@ -7,9 +7,15 @@ import { escapeHtml } from './dom.js';
 // =========================================
 //   Changelog Popup (after version update)
 // =========================================
-export var CURRENT_VERSION = "2.9.2";
+export var CURRENT_VERSION = "2.10.0";
 
 export var CHANGELOG = [
+  { version: "2.10.0", changes: [
+    "Rarest Achievements: now computed from your entire achievement history (like the mobile app), not just the last 30 days",
+    "Rarest Achievements: paginated (5 per page by default, configurable) with sort filters — Rarest first, Least rare first, Most recent",
+    "Rarest Achievements: each card now shows its unlock-rate % and rarity tier badge",
+    "Changelog popup: long changelogs now show 3 entries at a time, with a Show more / Show less toggle"
+  ]},
   { version: "2.9.2", changes: [
     "Profile: fixed the Player Insights dashboard failing to load (stats, Almost There, streaks, rarest and the activity timeline stayed empty)",
     "Profile: Beaten/Mastered labels are back on the paginated games list",
@@ -171,10 +177,35 @@ export function showChangelogPopup() {
     }
     if (newChanges.length === 0) return;
 
-    var changesHtml = newChanges.map(function (entry) {
-      var items = entry.changes.map(function (c) { return '<li style="margin:2px 0;">' + escapeHtml(c) + '</li>'; }).join('');
-      return '<div style="margin-bottom:10px;"><strong style="color:var(--ra-accent,#3b82f6);">v' + escapeHtml(entry.version) + '</strong><ul style="margin:4px 0 0 16px;padding:0;list-style:disc;">' + items + '</ul></div>';
-    }).join('');
+    // Flatten every version's changes into one list, so "show 3 at a time"
+    // paginates by individual feature/fix rather than by version block
+    // (a single version can carry far more than 3 entries).
+    var flatItems = [];
+    newChanges.forEach(function (entry) {
+      entry.changes.forEach(function (c) {
+        flatItems.push({ version: entry.version, text: c });
+      });
+    });
+
+    var PAGE_SIZE = 3;
+    var visibleCount = Math.min(PAGE_SIZE, flatItems.length);
+
+    function buildListHtml(count) {
+      var html = '';
+      var openVersion = null;
+      for (var i = 0; i < count; i++) {
+        var item = flatItems[i];
+        if (item.version !== openVersion) {
+          if (openVersion !== null) html += '</ul></div>';
+          html += '<div style="margin-bottom:10px;"><strong style="color:var(--ra-accent,#3b82f6);">v'
+            + escapeHtml(item.version) + '</strong><ul style="margin:4px 0 0 16px;padding:0;list-style:disc;">';
+          openVersion = item.version;
+        }
+        html += '<li style="margin:2px 0;">' + escapeHtml(item.text) + '</li>';
+      }
+      if (openVersion !== null) html += '</ul></div>';
+      return html;
+    }
 
     var overlay = document.createElement('div');
     overlay.id = 'enhanced-changelog-overlay';
@@ -185,13 +216,42 @@ export function showChangelogPopup() {
       + '<h3 style="margin:0;font-size:1.2rem;color:var(--heading-color,#d2d2d2);">🎮 RA Toolkit Updated!</h3>'
       + '<button id="enhanced-changelog-close" style="background:none;border:none;color:var(--text-color,#c8c8c8);font-size:1.4rem;cursor:pointer;padding:0 4px;line-height:1;">&times;</button>'
       + '</div>'
-      + '<div style="line-height:1.5;">' + changesHtml + '</div>'
-      + '<div style="text-align:center;margin-top:16px;">'
+      + '<div id="enhanced-changelog-list" style="line-height:1.5;"></div>'
+      + '<div style="text-align:center;margin-top:8px;">'
+      + '<button id="enhanced-changelog-toggle" style="padding:4px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:var(--ra-accent,#3b82f6);font-size:0.8rem;cursor:pointer;"></button>'
+      + '</div>'
+      + '<div style="text-align:center;margin-top:12px;">'
       + '<button id="enhanced-changelog-ok" style="padding:8px 24px;border-radius:8px;border:none;background:var(--ra-accent,#3b82f6);color:#fff;font-size:0.9rem;cursor:pointer;font-weight:600;">Got it!</button>'
       + '</div>'
       + '</div>';
 
     document.body.appendChild(overlay);
+
+    var listEl = document.getElementById('enhanced-changelog-list');
+    var toggleBtn = document.getElementById('enhanced-changelog-toggle');
+
+    function renderList() {
+      listEl.innerHTML = buildListHtml(visibleCount);
+      if (flatItems.length <= PAGE_SIZE) {
+        toggleBtn.style.display = 'none';
+        return;
+      }
+      toggleBtn.style.display = '';
+      if (visibleCount < flatItems.length) {
+        toggleBtn.textContent = 'Show more (+' + Math.min(PAGE_SIZE, flatItems.length - visibleCount) + ')';
+      } else {
+        toggleBtn.textContent = 'Show less';
+      }
+    }
+
+    toggleBtn.addEventListener('click', function () {
+      visibleCount = visibleCount < flatItems.length
+        ? Math.min(visibleCount + PAGE_SIZE, flatItems.length)
+        : Math.min(PAGE_SIZE, flatItems.length);
+      renderList();
+    });
+
+    renderList();
 
     function closePopup() { overlay.remove(); }
     document.getElementById('enhanced-changelog-close').addEventListener('click', closePopup);

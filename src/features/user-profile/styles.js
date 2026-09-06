@@ -278,6 +278,10 @@ export function injectProfileStyles() {
       font-size: 0.7rem;
       color: #737373;
     }
+    .enhanced-rare-tier {
+      margin-top: 3px;
+      min-height: 16px;
+    }
     .enhanced-rare-ratio {
       font-size: 0.75rem;
       font-weight: 700;

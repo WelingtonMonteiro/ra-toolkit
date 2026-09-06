@@ -20,7 +20,6 @@ export const rawebApiEndpoints = [
   "API_GetUserAwards",
   "API_GetUserSummary",
   "API_GetUserRecentlyPlayedGames",
-  "API_GetUserRecentAchievements",
   "API_GetAchievementsEarnedBetween",
   "API_GetGameInfoAndUserProgress"
 ];

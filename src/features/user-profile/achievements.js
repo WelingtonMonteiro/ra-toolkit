@@ -20,6 +20,29 @@ export function clearAchievementCache() {
   for (const key in playerCountCache) delete playerCountCache[key];
 }
 
+// Fetches a game's achievement list + distinct player count, caching by
+// gameId so repeated lookups (game-list expansion, rarest achievements
+// badges, ...) reuse the same data instead of refetching.
+export function fetchGameRarityData(gameId, targetUser, apiKey) {
+  if (achievementCache[gameId]) {
+    return Promise.resolve({ achievements: achievementCache[gameId], numPlayers: playerCountCache[gameId] || 0 });
+  }
+
+  var url = 'https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php'
+    + '?g=' + gameId
+    + '&u=' + encodeURIComponent(targetUser)
+    + '&y=' + encodeURIComponent(apiKey);
+
+  return gmFetch(url, 15000).then(function (resp) {
+    var data = JSON.parse(resp.responseText);
+    var achievements = data.Achievements || {};
+    var numPlayers = parseInt(data.NumDistinctPlayers, 10) || 0;
+    achievementCache[gameId] = achievements;
+    playerCountCache[gameId] = numPlayers;
+    return { achievements: achievements, numPlayers: numPlayers };
+  });
+}
+
 export function fetchAndRenderAchievements(gameId, gridContainer, gameName, ctx) {
   const { targetUser, apiKey, enableRarityIndicator } = ctx;
   if (achievementCache[gameId]) {
@@ -29,18 +52,8 @@ export function fetchAndRenderAchievements(gameId, gridContainer, gameName, ctx)
 
   renderSkeletonBadges(gridContainer, 12);
 
-  var url = 'https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php'
-    + '?g=' + gameId
-    + '&u=' + encodeURIComponent(targetUser)
-    + '&y=' + encodeURIComponent(apiKey);
-
-  gmFetch(url, 15000).then(function (resp) {
-    var data = JSON.parse(resp.responseText);
-    var achievements = data.Achievements || {};
-    var numPlayers = parseInt(data.NumDistinctPlayers, 10) || 0;
-    achievementCache[gameId] = achievements;
-    playerCountCache[gameId] = numPlayers;
-    renderAchievementBadges(achievements, gridContainer, gameName, numPlayers, enableRarityIndicator);
+  fetchGameRarityData(gameId, targetUser, apiKey).then(function (data) {
+    renderAchievementBadges(data.achievements, gridContainer, gameName, data.numPlayers, enableRarityIndicator);
   }).catch(function () {
     gridContainer.innerHTML = '<div style="color:#ef4444;grid-column:1/-1;">Failed to load achievements</div>';
   });

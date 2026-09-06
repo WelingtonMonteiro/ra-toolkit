@@ -182,6 +182,33 @@ describe('changelog popup', () => {
 
     expect(document.getElementById('enhanced-changelog-overlay')).toBeNull();
   });
+
+  it('shows 3 entries at a time, revealing more via Show more / Show less', async () => {
+    store.lastSeenVersion = '0.0.0';
+    await api.showChangelogPopup();
+
+    const totalItems = api.CHANGELOG.reduce((n, entry) => n + entry.changes.length, 0);
+    const list = document.getElementById('enhanced-changelog-list');
+    const toggle = document.getElementById('enhanced-changelog-toggle');
+
+    expect(list.querySelectorAll('li')).toHaveLength(Math.min(3, totalItems));
+    if (totalItems <= 3) {
+      expect(toggle.style.display).toBe('none');
+      return;
+    }
+
+    expect(toggle.textContent).toContain('Show more');
+    toggle.click();
+    expect(list.querySelectorAll('li')).toHaveLength(Math.min(6, totalItems));
+
+    // Keep clicking through to the end, then confirm it collapses back to 3.
+    while (toggle.textContent.includes('Show more')) toggle.click();
+    expect(list.querySelectorAll('li')).toHaveLength(totalItems);
+    expect(toggle.textContent).toBe('Show less');
+
+    toggle.click();
+    expect(list.querySelectorAll('li')).toHaveLength(Math.min(3, totalItems));
+  });
 });
 
 describe('cleanup', () => {
